@@ -4,45 +4,75 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Site Progress</title>
+
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome Icons -->
+
+  <!-- Google Fonts: Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-  <!-- Supabase JS -->
+
+  <!-- Supabase JS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- SheetJS for Excel Export -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
   <!-- jsPDF & AutoTable for A4 PDF Export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
+  <!-- SheetJS for Excel Export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
   <style>
     body {
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      background-color: #090d16;
+      font-family: 'Inter', sans-serif;
+      background-color: #0f172a;
       color: #f8fafc;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
-    .app-container {
-      max-width: 440px;
-      margin: 0 auto;
-      min-height: 100vh;
-      background: #0f172a;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      box-shadow: 0 0 40px rgba(0,0,0,0.6);
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
     }
-    input[type="number"]::-webkit-inner-spin-button,
-    input[type="number"]::-webkit-outer-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
+    ::-webkit-scrollbar-track {
+      background: #1e293b;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #475569;
+      border-radius: 9999px;
+    }
+    .glass-card {
+      background: rgba(30, 41, 59, 0.88);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .input-field {
+      background-color: #0f172a;
+      border: 1.5px solid #334155;
+      color: #f8fafc;
+      transition: all 0.2s ease;
+    }
+    .input-field:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+      outline: none;
+    }
+    /* Make native date picker icon visible on dark background */
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(1);
+      cursor: pointer;
     }
   </style>
 </head>
-<body>
+<body class="min-h-screen flex flex-col items-center justify-start sm:justify-center p-0 sm:p-4 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950">
 
-  <div class="app-container border-x border-slate-800/80">
-    <!-- TOP STATUS BAR (DB Setup Button Removed for Security) -->
+  <!-- MAIN MOBILE-FIRST APP CONTAINER -->
+  <div class="w-full max-w-md min-h-screen sm:min-h-[780px] sm:max-h-[90vh] bg-slate-900 sm:rounded-3xl shadow-2xl border-0 sm:border border-slate-800 flex flex-col relative overflow-hidden">
+
+    <!-- TOP STATUS & DB CONFIG BAR -->
     <header class="px-5 py-3.5 bg-slate-950/70 border-b border-slate-800/80 flex items-center justify-between shrink-0">
       <div class="flex items-center gap-2.5">
         <div class="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center shadow-md shadow-blue-600/30">
@@ -55,1133 +85,1591 @@
           </span>
         </div>
       </div>
+
+      <!-- Supabase Config Modal Trigger -->
+      
     </header>
 
-    <!-- MAIN CONTENT AREA -->
-    <main class="flex-1 overflow-y-auto pb-24 px-5 pt-5">
+    <!-- CONTENT AREA (Scrollable) -->
+    <main class="flex-1 overflow-y-auto px-5 py-6 pb-24">
 
-      <!-- ================= 1. LOGIN PAGE ================= -->
-      <section id="loginView" class="space-y-5 pt-4">
-        <div class="text-center space-y-1">
-          <h2 class="text-2xl font-bold text-white">Welcome Back</h2>
-          <p class="text-xs text-slate-400">Log in to manage your daily site reports</p>
+      <!-- ==========================================
+           1. LOGIN PAGE
+      =========================================== -->
+      <section id="page-login" class="space-y-6 my-auto py-4">
+        <div class="text-center space-y-2">
+          <div class="w-16 h-16 rounded-2xl bg-blue-600/15 border border-blue-500/30 text-blue-400 flex items-center justify-center mx-auto mb-3 shadow-inner">
+            <i class="fa-solid fa-trowel-bricks text-2xl"></i>
+          </div>
+          <h2 class="text-2xl font-extrabold text-white tracking-tight">Welcome Back</h2>
+          <p class="text-xs text-slate-400">Log in to manage your daily site pipe & connection reports</p>
         </div>
 
-        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
+        <div id="loginErrorBox" class="hidden p-3 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs font-medium text-center"></div>
+
+        <div class="space-y-4">
           <div>
-            <label class="block text-xs font-semibold text-slate-300 mb-1.5">Email ID</label>
-            <input id="loginEmail" type="email" placeholder="you@example.com" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500" />
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Email ID</label>
+            <div class="relative">
+              <i class="fa-regular fa-envelope absolute left-3.5 top-3.5 text-slate-500 text-sm"></i>
+              <input id="loginEmail" type="email" placeholder="Enter your email ID" class="input-field w-full pl-10 pr-4 py-3 rounded-xl text-sm" />
+            </div>
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-slate-300 mb-1.5">Password</label>
-            <input id="loginPassword" type="password" placeholder="••••••••" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500" />
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Password</label>
+            <div class="relative">
+              <i class="fa-solid fa-lock absolute left-3.5 top-3.5 text-slate-500 text-sm"></i>
+              <input id="loginPassword" type="password" placeholder="Enter your password" class="input-field w-full pl-10 pr-10 py-3 rounded-xl text-sm" />
+              <button type="button" onclick="togglePasswordVisibility('loginPassword', this)" class="absolute right-3.5 top-3 text-slate-400 hover:text-slate-200">
+                <i class="fa-regular fa-eye text-sm"></i>
+              </button>
+            </div>
           </div>
 
-          <div class="text-right">
-            <button onclick="showView('forgotView')" class="text-xs font-semibold text-blue-400 hover:text-blue-300">
+          <!-- Forgot Password Text -->
+          <div class="text-center pt-1">
+            <button type="button" onclick="showPage('page-forgot')" class="text-xs font-semibold text-blue-400 hover:text-blue-300 transition underline underline-offset-4">
               Forgot Password?
             </button>
           </div>
 
-          <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-[0.99] text-white font-semibold py-2.5 rounded-xl text-sm shadow-lg shadow-blue-600/30 transition">
-            Log In
+          <!-- Log In Button -->
+          <button id="btnLogin" onclick="handleLogin()" class="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-[0.99] text-white font-bold text-sm shadow-lg shadow-blue-600/30 transition flex items-center justify-center gap-2">
+            <span>Log In</span>
+            <i class="fa-solid fa-arrow-right-to-bracket"></i>
           </button>
 
-          <div class="text-center pt-2 border-t border-slate-800">
-            <button onclick="showView('registerView')" class="text-xs text-slate-300 hover:text-white font-medium">
-              Don't have an account? <span class="text-blue-400 font-semibold underline">New Register</span>
+          <!-- New Register Text -->
+          <div class="text-center pt-3 border-t border-slate-800">
+            <span class="text-xs text-slate-400">Don't have an account? </span>
+            <button type="button" onclick="showPage('page-register')" class="text-sm font-bold text-emerald-400 hover:text-emerald-300 ml-1 underline underline-offset-4">
+              New Register
             </button>
           </div>
         </div>
       </section>
 
-      <!-- ================= 2. REGISTER PAGE ================= -->
-      <section id="registerView" class="hidden space-y-5 pt-2">
-        <div class="flex items-center gap-2">
-          <button onclick="showView('loginView')" class="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white">
-            <i class="fa-solid fa-arrow-left text-xs"></i>
+      <!-- ==========================================
+           2. REGISTER PAGE
+      =========================================== -->
+      <section id="page-register" class="hidden space-y-5 py-2">
+        <div class="flex items-center gap-3">
+          <button onclick="showPage('page-login')" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center">
+            <i class="fa-solid fa-arrow-left text-sm"></i>
           </button>
-          <h2 class="text-xl font-bold text-white">New Registration</h2>
+          <div>
+            <h2 class="text-xl font-extrabold text-white">New Register</h2>
+            <p class="text-xs text-slate-400">Create your Site Progress account</p>
+          </div>
         </div>
 
-        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-3.5 shadow-xl">
+        <div id="registerErrorBox" class="hidden p-3 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs font-medium text-center"></div>
+
+        <div class="space-y-3.5">
           <div>
-            <label class="block text-xs font-semibold text-slate-300 mb-1">User Name</label>
-            <input id="regUsername" type="text" placeholder="Enter full name" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500" />
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">User Name</label>
+            <input id="regUsername" type="text" placeholder="Enter User Name" class="input-field w-full px-4 py-3 rounded-xl text-sm" />
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-slate-300 mb-1">Email ID</label>
-            <input id="regEmail" type="email" placeholder="you@example.com" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500" />
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Email ID</label>
+            <input id="regEmail" type="email" placeholder="Enter Email ID" class="input-field w-full px-4 py-3 rounded-xl text-sm" />
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-slate-300 mb-1">Password</label>
-            <input id="regPassword" type="password" placeholder="Create password" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500" />
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Password</label>
+            <input id="regPassword" type="password" placeholder="Enter Password" class="input-field w-full px-4 py-3 rounded-xl text-sm" />
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-slate-300 mb-1">Re-enter Password</label>
-            <input id="regRePassword" type="password" placeholder="Confirm password" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500" />
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Re-enter Password</label>
+            <input id="regRePassword" type="password" placeholder="Re-enter Password" class="input-field w-full px-4 py-3 rounded-xl text-sm" />
           </div>
 
-          <button onclick="handleRegister()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-sm shadow-lg shadow-emerald-600/30 transition mt-2">
+          <button onclick="handleRegister()" class="w-full py-3.5 mt-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white font-bold text-sm shadow-lg shadow-emerald-600/30 transition">
             Register
           </button>
         </div>
       </section>
 
-      <!-- ================= 3. FORGOT PASSWORD PAGE ================= -->
-      <section id="forgotView" class="hidden space-y-5 pt-2">
-        <div class="flex items-center gap-2">
-          <button onclick="showView('loginView')" class="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white">
-            <i class="fa-solid fa-arrow-left text-xs"></i>
+      <!-- ==========================================
+           3. FORGOT PASSWORD - VERIFY EMAIL PAGE
+      =========================================== -->
+      <section id="page-forgot" class="hidden space-y-5 py-4">
+        <div class="flex items-center gap-3">
+          <button onclick="showPage('page-login')" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center">
+            <i class="fa-solid fa-arrow-left text-sm"></i>
           </button>
-          <h2 class="text-xl font-bold text-white">Forgot Password</h2>
+          <div>
+            <h2 class="text-xl font-extrabold text-white">Forgot Password</h2>
+            <p class="text-xs text-slate-400">Verify your registered Email ID</p>
+          </div>
         </div>
 
-        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
+        <div id="forgotErrorBox" class="hidden p-3 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs font-semibold text-center"></div>
+
+        <div class="space-y-4 pt-2">
           <div>
-            <label class="block text-xs font-semibold text-slate-300 mb-1.5">Enter Mail ID</label>
-            <input id="forgotEmail" type="email" placeholder="Enter your registered email" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500" />
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Enter Mail ID</label>
+            <input id="forgotEmailInput" type="email" placeholder="Enter registered mail ID" class="input-field w-full px-4 py-3 rounded-xl text-sm" />
           </div>
 
-          <button onclick="handleVerifyEmail()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-xl text-sm shadow-lg shadow-blue-600/30 transition">
+          <button onclick="handleVerifyEmail()" class="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm shadow-lg shadow-blue-600/30 transition">
             Verify
           </button>
         </div>
       </section>
 
-      <!-- ================= 4. RESET PASSWORD PAGE ================= -->
-      <section id="resetView" class="hidden space-y-5 pt-2">
-        <h2 class="text-xl font-bold text-white">Reset Password</h2>
+      <!-- ==========================================
+           4. RESET PASSWORD PAGE
+      =========================================== -->
+      <section id="page-reset" class="hidden space-y-5 py-3">
+        <div>
+          <h2 class="text-xl font-extrabold text-white">Reset Password</h2>
+          <p class="text-xs text-slate-400">Set a new password for your account</p>
+        </div>
 
-        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-3.5 shadow-xl">
-          <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-1">
-            <p class="text-xs text-slate-400">User Name: <span id="resetUsernameDisplay" class="text-white font-semibold"></span></p>
-            <p class="text-xs text-slate-400">Mail ID: <span id="resetEmailDisplay" class="text-blue-400 font-semibold"></span></p>
+        <!-- Read-only User Info Card -->
+        <div class="p-3.5 rounded-xl bg-slate-800/90 border border-slate-700 space-y-1">
+          <div class="text-xs text-slate-400">User Name: <span id="resetDisplayUsername" class="font-bold text-white"></span></div>
+          <div class="text-xs text-slate-400">Mail ID: <span id="resetDisplayEmail" class="font-bold text-blue-400"></span></div>
+        </div>
+
+        <div id="resetMsgBox" class="hidden p-3 rounded-xl text-xs font-semibold text-center"></div>
+
+        <div class="space-y-3.5">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">New Password</label>
+            <input id="resetNewPassword" type="password" placeholder="Enter new password" class="input-field w-full px-4 py-3 rounded-xl text-sm" />
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-slate-300 mb-1">New Password</label>
-            <input id="resetNewPassword" type="password" placeholder="Enter new password" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500" />
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Retype Password</label>
+            <input id="resetRetypePassword" type="password" placeholder="Retype new password" class="input-field w-full px-4 py-3 rounded-xl text-sm" />
           </div>
 
-          <div>
-            <label class="block text-xs font-semibold text-slate-300 mb-1">Retype Password</label>
-            <input id="resetRetypePassword" type="password" placeholder="Retype new password" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500" />
-          </div>
-
-          <button onclick="handleResetPassword()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-sm shadow-lg shadow-emerald-600/30 transition">
+          <button onclick="handleResetPassword()" class="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-600/30 transition">
             OK
           </button>
 
-          <button onclick="showView('loginView')" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-2.5 rounded-xl text-sm transition">
+          <button onclick="showPage('page-login')" class="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-sm border border-slate-700 transition">
             Back to Login
           </button>
         </div>
       </section>
 
-      <!-- ================= 5. HOME PAGE ================= -->
-      <section id="homeView" class="hidden space-y-4">
-        <!-- Top Left Back Button to Login -->
+      <!-- ==========================================
+           5. HOME PAGE
+      =========================================== -->
+      <section id="page-home" class="hidden space-y-5">
+        <!-- Top Left Back Button to Login Page -->
         <div class="flex items-center justify-between">
-          <button onclick="backToLoginFromHome()" class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white">
-            <i class="fa-solid fa-arrow-left"></i> Back
+          <button onclick="goBackToLoginFromHome()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-2 border border-slate-700 transition">
+            <i class="fa-solid fa-arrow-left"></i>
+            <span>Back</span>
           </button>
-          <span class="text-xs text-slate-400">Home Dashboard</span>
+          <span class="text-xs text-slate-400 font-medium">Daily Site Entry</span>
         </div>
 
-        <!-- Center Current Date Picker -->
-        <div class="text-center pt-1">
-          <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Report Date</label>
-          <input id="homeDate" type="date" class="mx-auto block bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm font-semibold text-white text-center focus:outline-none focus:border-blue-500" />
+        <!-- Slightly Below Top Center: Current Date Picker -->
+        <div class="flex flex-col items-center justify-center pt-1">
+          <label class="text-[11px] font-semibold uppercase tracking-wider text-blue-400 mb-1">Select Report Date</label>
+          <input id="homeDateInput" type="date" class="input-field px-4 py-2.5 rounded-xl text-sm font-bold text-center w-56 shadow-inner" />
         </div>
 
-        <!-- Persistent Site Title (Default: Savarkundla), Area & Labour -->
-        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 space-y-3.5 shadow-lg">
+        <!-- Center EditText: Default "Savarkundla" (Persistent across logins) -->
+        <div class="space-y-4 pt-2">
+          <div class="text-center">
+            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Site / City Title (Persistent)</label>
+            <input id="homeSiteTitle" type="text" value="Savarkundla" oninput="persistUserDefaults()" placeholder="Site Name" class="input-field w-full px-4 py-3 rounded-xl text-base font-bold text-center text-amber-400" />
+          </div>
+
+          <!-- Below that: 2 EditTexts (Enter Area & Enter Labour Name - non-mandatory, persistent) -->
           <div>
-            <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1 text-center">Site / Project Title</label>
-            <input id="homeSiteTitle" type="text" value="Savarkundla" oninput="savePersistentHomeFields()" class="w-full bg-slate-950 border border-blue-500/50 rounded-xl px-3.5 py-2.5 text-base font-bold text-center text-white focus:outline-none focus:border-blue-500" />
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Enter Area <span class="text-slate-500 font-normal">(Optional)</span></label>
+            <input id="homeAreaInput" type="text" oninput="persistUserDefaults()" placeholder="Enter Area" class="input-field w-full px-4 py-3 rounded-xl text-sm" />
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-slate-300 mb-1">Enter Area <span class="text-slate-500 font-normal">(Optional)</span></label>
-            <input id="homeArea" type="text" placeholder="Enter Area" oninput="savePersistentHomeFields()" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500" />
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Enter Labour Name <span class="text-slate-500 font-normal">(Optional)</span></label>
+            <input id="homeLabourInput" type="text" oninput="persistUserDefaults()" placeholder="Enter Labour Name" class="input-field w-full px-4 py-3 rounded-xl text-sm" />
           </div>
 
-          <div>
-            <label class="block text-xs font-semibold text-slate-300 mb-1">Enter Labour Name <span class="text-slate-500 font-normal">(Optional)</span></label>
-            <input id="homeLabour" type="text" placeholder="Enter Labour Name" oninput="savePersistentHomeFields()" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500" />
-          </div>
-
-          <div class="pt-2">
-            <button onclick="openNewReportView()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl text-sm shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2 transition">
-              <i class="fa-solid fa-plus"></i> New Report
+          <!-- New Report Button -->
+          <div class="pt-3">
+            <button onclick="openNewReportPage()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-[0.99] text-white font-extrabold text-base shadow-xl shadow-blue-600/30 flex items-center justify-center gap-2.5 transition">
+              <i class="fa-solid fa-file-circle-plus text-lg"></i>
+              <span>New Report</span>
             </button>
           </div>
         </div>
       </section>
 
-      <!-- ================= 6. NEW REPORT PAGE ================= -->
-      <section id="newReportView" class="hidden space-y-4">
+      <!-- ==========================================
+           6. NEW REPORT PAGE
+      =========================================== -->
+      <section id="page-new-report" class="hidden space-y-5">
         <div class="flex items-center justify-between">
-          <button onclick="showView('homeView')" class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white">
+          <button onclick="switchMainTab('home')" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 border border-slate-700">
             <i class="fa-solid fa-arrow-left"></i> Back
           </button>
-          <h2 class="text-base font-bold text-white text-center flex-1 pr-12">Pipes Size</h2>
+          <span id="newReportDateBadge" class="text-xs font-bold text-blue-400 bg-blue-500/10 px-3 py-1 rounded-lg border border-blue-500/20"></span>
         </div>
 
-        <div class="space-y-3">
+        <!-- Top Center Heading: Pipes Size -->
+        <div class="text-center">
+          <h2 class="text-xl font-extrabold text-white tracking-wide uppercase">Pipes Size</h2>
+          <p class="text-xs text-slate-400">Whole numbers only (1 Pipe = 6 MTR)</p>
+        </div>
+
+        <!-- 3 Pipe Count Inputs (63MM, 90MM, 110MM) -->
+        <div class="space-y-3.5 glass-card p-4 rounded-2xl">
           <!-- 63MM PVC -->
-          <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 space-y-2.5">
-            <div class="flex items-center justify-between">
-              <span class="text-sm font-bold text-blue-400">63MM PVC</span>
-              <span id="total63Text" class="text-xs font-bold bg-blue-500/10 text-blue-300 border border-blue-500/30 px-2.5 py-1 rounded-lg">Total - 0 MTR</span>
-            </div>
-            <input id="count63" type="number" step="1" min="0" placeholder="Count" oninput="sanitizeIntegerInput(this); updateNewReportTotals()" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-blue-500" />
-            <div class="flex items-center gap-2">
-              <button type="button" onclick="toggleExtraMtr('extra63Wrap')" class="text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700">+MTR</button>
-              <div id="extra63Wrap" class="hidden flex-1">
-                <input id="extra63" type="number" step="1" min="0" placeholder="Extra MTR (Integer)" oninput="sanitizeIntegerInput(this); updateNewReportTotals()" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3 py-1.5 text-sm text-white focus:outline-none focus:border-blue-500" />
-              </div>
-            </div>
+          <div>
+            <label class="block text-xs font-bold text-amber-400 mb-1">63MM PVC</label>
+            <input id="count63" type="text" inputmode="numeric" placeholder="Count" oninput="sanitizeWholeNumber(this); calculateNewReportTotals();" class="input-field w-full px-4 py-2.5 rounded-xl text-sm font-semibold" />
           </div>
 
           <!-- 90MM PVC -->
-          <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 space-y-2.5">
-            <div class="flex items-center justify-between">
-              <span class="text-sm font-bold text-emerald-400">90MM PVC</span>
-              <span id="total90Text" class="text-xs font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 px-2.5 py-1 rounded-lg">Total - 0 MTR</span>
-            </div>
-            <input id="count90" type="number" step="1" min="0" placeholder="Count" oninput="sanitizeIntegerInput(this); updateNewReportTotals()" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-blue-500" />
-            <div class="flex items-center gap-2">
-              <button type="button" onclick="toggleExtraMtr('extra90Wrap')" class="text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700">+MTR</button>
-              <div id="extra90Wrap" class="hidden flex-1">
-                <input id="extra90" type="number" step="1" min="0" placeholder="Extra MTR (Integer)" oninput="sanitizeIntegerInput(this); updateNewReportTotals()" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3 py-1.5 text-sm text-white focus:outline-none focus:border-blue-500" />
-              </div>
-            </div>
+          <div>
+            <label class="block text-xs font-bold text-emerald-400 mb-1">90MM PVC</label>
+            <input id="count90" type="text" inputmode="numeric" placeholder="Count" oninput="sanitizeWholeNumber(this); calculateNewReportTotals();" class="input-field w-full px-4 py-2.5 rounded-xl text-sm font-semibold" />
           </div>
 
           <!-- 110MM PVC -->
-          <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 space-y-2.5">
-            <div class="flex items-center justify-between">
-              <span class="text-sm font-bold text-amber-400">110MM PVC</span>
-              <span id="total110Text" class="text-xs font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30 px-2.5 py-1 rounded-lg">Total - 0 MTR</span>
-            </div>
-            <input id="count110" type="number" step="1" min="0" placeholder="Count" oninput="sanitizeIntegerInput(this); updateNewReportTotals()" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-blue-500" />
-            <div class="flex items-center gap-2">
-              <button type="button" onclick="toggleExtraMtr('extra110Wrap')" class="text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700">+MTR</button>
-              <div id="extra110Wrap" class="hidden flex-1">
-                <input id="extra110" type="number" step="1" min="0" placeholder="Extra MTR (Integer)" oninput="sanitizeIntegerInput(this); updateNewReportTotals()" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3 py-1.5 text-sm text-white focus:outline-none focus:border-blue-500" />
+          <div>
+            <label class="block text-xs font-bold text-cyan-400 mb-1">110MM PVC</label>
+            <input id="count110" type="text" inputmode="numeric" placeholder="Count" oninput="sanitizeWholeNumber(this); calculateNewReportTotals();" class="input-field w-full px-4 py-2.5 rounded-xl text-sm font-semibold" />
+          </div>
+
+          <!-- +MTR Button & Inputs -->
+          <div class="pt-2">
+            <button type="button" onclick="toggleExtraMtrSection()" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-blue-400 font-bold text-xs border border-blue-500/30 flex items-center justify-center gap-2 transition">
+              <i class="fa-solid fa-plus-circle"></i>
+              <span>+MTR (Add Extra Meter)</span>
+            </button>
+
+            <div id="extraMtrContainer" class="grid grid-cols-3 gap-2.5 mt-3 pt-3 border-t border-slate-800">
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 mb-1">63MM +MTR</label>
+                <input id="extra63" type="text" inputmode="numeric" placeholder="+MTR" oninput="sanitizeWholeNumber(this); calculateNewReportTotals();" class="input-field w-full px-3 py-2 rounded-lg text-xs font-semibold text-center" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 mb-1">90MM +MTR</label>
+                <input id="extra90" type="text" inputmode="numeric" placeholder="+MTR" oninput="sanitizeWholeNumber(this); calculateNewReportTotals();" class="input-field w-full px-3 py-2 rounded-lg text-xs font-semibold text-center" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 mb-1">110MM +MTR</label>
+                <input id="extra110" type="text" inputmode="numeric" placeholder="+MTR" oninput="sanitizeWholeNumber(this); calculateNewReportTotals();" class="input-field w-full px-3 py-2 rounded-lg text-xs font-semibold text-center" />
               </div>
             </div>
           </div>
 
-          <!-- Connections -->
-          <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 space-y-2">
-            <label class="block text-sm font-bold text-purple-400">Connections</label>
-            <input id="connectionsInput" type="number" step="1" min="0" placeholder="Enter Connections" oninput="sanitizeIntegerInput(this); updateNewReportTotals()" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-blue-500" />
-            <p id="totalConnectionsText" class="text-xs font-bold text-purple-300">Total Connection: 0</p>
+          <!-- 3 Individual Total MTR TextViews -->
+          <div class="pt-3 border-t border-slate-800 space-y-1.5 text-xs font-bold">
+            <div class="flex justify-between items-center px-3 py-2 rounded-lg bg-slate-950/60">
+              <span class="text-amber-400">63MM PVC:</span>
+              <span id="totalText63" class="text-white">Total - 0MTR</span>
+            </div>
+            <div class="flex justify-between items-center px-3 py-2 rounded-lg bg-slate-950/60">
+              <span class="text-emerald-400">90MM PVC:</span>
+              <span id="totalText90" class="text-white">Total - 0MTR</span>
+            </div>
+            <div class="flex justify-between items-center px-3 py-2 rounded-lg bg-slate-950/60">
+              <span class="text-cyan-400">110MM PVC:</span>
+              <span id="totalText110" class="text-white">Total - 0MTR</span>
+            </div>
           </div>
-
-          <button onclick="handleSaveReport()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-xl text-sm shadow-lg shadow-emerald-600/30 transition">
-            Save
-          </button>
         </div>
+
+        <!-- Connections EditText & Total Connection TextView -->
+        <div class="glass-card p-4 rounded-2xl space-y-3">
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">Connections</label>
+            <input id="connectionsInput" type="text" inputmode="numeric" placeholder="Enter Connections (Whole Number)" oninput="sanitizeWholeNumber(this); calculateNewReportTotals();" class="input-field w-full px-4 py-2.5 rounded-xl text-sm font-semibold" />
+          </div>
+          <div class="px-3 py-2 rounded-lg bg-slate-950/60 flex justify-between items-center text-xs font-bold">
+            <span class="text-purple-400">Total Connection:</span>
+            <span id="totalConnectionText" class="text-white text-sm">0</span>
+          </div>
+        </div>
+
+        <!-- Save Button -->
+        <button onclick="handleSaveReport()" class="w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white font-extrabold text-base shadow-xl shadow-emerald-600/30 flex items-center justify-center gap-2 transition">
+          <i class="fa-solid fa-floppy-disk"></i>
+          <span>Save</span>
+        </button>
       </section>
 
-      <!-- ================= 7. FILTER PAGE ================= -->
-      <section id="filterView" class="hidden space-y-4">
-        <h2 class="text-lg font-bold text-white text-center">Filter Data</h2>
+      <!-- ==========================================
+           7. FILTER PAGE
+      =========================================== -->
+      <section id="page-filter" class="hidden space-y-4">
+        <!-- Top TextView: Filter Data -->
+        <div class="text-center">
+          <h2 class="text-xl font-extrabold text-white tracking-wide">Filter Data</h2>
+          <p class="text-xs text-slate-400">View monthly combined totals or date-wise reports</p>
+        </div>
 
-        <!-- Row 1: Select Date, Month, Year (Horizontal) -->
+        <!-- 3 Horizontal Filter Controls: Select Date, Month, Year -->
         <div class="grid grid-cols-3 gap-2">
-          <div>
-            <label class="block text-[10px] font-semibold text-slate-400 uppercase mb-1">Select Date</label>
-            <input id="filterDate" type="date" onchange="onFilterDateChange()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2 py-2 text-xs text-white focus:outline-none focus:border-blue-500" />
+          <!-- 1. Select Date (None selected by default) -->
+          <div class="relative">
+            <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Select Date</label>
+            <input id="filterDateInput" type="date" onchange="onFilterDateChange()" class="input-field w-full px-2 py-2 rounded-xl text-xs font-semibold" />
           </div>
+
+          <!-- 2. Month (Current Month by default) -->
           <div>
-            <label class="block text-[10px] font-semibold text-slate-400 uppercase mb-1">Month</label>
-            <select id="filterMonth" onchange="onFilterMonthYearChange()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
-              <option value="1">January</option>
-              <option value="2">February</option>
-              <option value="3">March</option>
-              <option value="4">April</option>
-              <option value="5">May</option>
-              <option value="6">June</option>
-              <option value="7">July</option>
-              <option value="8">August</option>
-              <option value="9">September</option>
+            <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Month</label>
+            <select id="filterMonthSelect" onchange="onFilterMonthYearChange()" class="input-field w-full px-2 py-2 rounded-xl text-xs font-semibold">
+              <option value="01">January</option>
+              <option value="02">February</option>
+              <option value="03">March</option>
+              <option value="04">April</option>
+              <option value="05">May</option>
+              <option value="06">June</option>
+              <option value="07">July</option>
+              <option value="08">August</option>
+              <option value="09">September</option>
               <option value="10">October</option>
               <option value="11">November</option>
               <option value="12">December</option>
             </select>
           </div>
+
+          <!-- 3. Year (Current Year by default) -->
           <div>
-            <label class="block text-[10px] font-semibold text-slate-400 uppercase mb-1">Year</label>
-            <select id="filterYear" onchange="onFilterMonthYearChange()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2 py-2 text-xs text-white focus:outline-none focus:border-blue-500"></select>
+            <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Year</label>
+            <select id="filterYearSelect" onchange="onFilterMonthYearChange()" class="input-field w-full px-2 py-2 rounded-xl text-xs font-semibold"></select>
           </div>
         </div>
 
-        <!-- Row 2: Select Area & Select Labour (Horizontal below Date/Month/Year) -->
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-[10px] font-semibold text-slate-400 uppercase mb-1">Select Area</label>
-            <select id="filterArea" onchange="renderFilterData()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
-              <option value="">Select Area (All)</option>
-            </select>
+        <!-- Clear Specific Date Pill (Visible when a date is chosen) -->
+        <div id="activeDateFilterBanner" class="hidden flex items-center justify-between px-3 py-2 rounded-xl bg-blue-500/15 border border-blue-500/30 text-xs">
+          <span class="text-blue-300 font-medium">Showing Date: <strong id="activeDateLabel" class="text-white"></strong></span>
+          <button onclick="clearDateFilter()" class="text-xs font-bold text-rose-400 hover:text-rose-300 flex items-center gap-1">
+            <i class="fa-solid fa-xmark"></i> Show Month Summary
+          </button>
+        </div>
+
+        <!-- No Data Message -->
+        <div id="filterNoDataBox" class="hidden py-12 text-center glass-card rounded-2xl space-y-2">
+          <i class="fa-regular fa-folder-open text-3xl text-slate-500"></i>
+          <p class="text-base font-bold text-slate-300">No Data</p>
+          <p class="text-xs text-slate-500">No reports found for this selection</p>
+        </div>
+
+        <!-- MODE A: MONTHLY COMBINED SUMMARY TABLE -->
+        <div id="monthlySummarySection" class="hidden space-y-4">
+          <div class="glass-card rounded-2xl overflow-hidden border border-slate-800">
+            <div class="px-4 py-2.5 bg-slate-950/70 border-b border-slate-800 flex justify-between items-center text-xs">
+              <span id="monthlySummaryHeaderTitle" class="font-bold text-amber-400">Savarkundla</span>
+              <span id="monthlySummaryPeriod" class="text-slate-400 font-semibold"></span>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="bg-slate-900/90 text-slate-400 border-b border-slate-800 uppercase text-[11px]">
+                    <th class="py-3 px-3 font-bold">PVC</th>
+                    <th class="py-3 px-3 font-bold text-center">PIPE</th>
+                    <th class="py-3 px-3 font-bold text-center">EXTRA MTR</th>
+                    <th class="py-3 px-3 font-bold text-right">TOTAL MTR</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/70 font-semibold">
+                  <tr>
+                    <td class="py-3 px-3 text-amber-400 font-bold">63MM</td>
+                    <td id="sumPipe63" class="py-3 px-3 text-center">0</td>
+                    <td id="sumExtra63" class="py-3 px-3 text-center">0</td>
+                    <td id="sumTotal63" class="py-3 px-3 text-right text-white font-bold">0</td>
+                  </tr>
+                  <tr>
+                    <td class="py-3 px-3 text-emerald-400 font-bold">90MM</td>
+                    <td id="sumPipe90" class="py-3 px-3 text-center">0</td>
+                    <td id="sumExtra90" class="py-3 px-3 text-center">0</td>
+                    <td id="sumTotal90" class="py-3 px-3 text-right text-white font-bold">0</td>
+                  </tr>
+                  <tr>
+                    <td class="py-3 px-3 text-cyan-400 font-bold">110MM</td>
+                    <td id="sumPipe110" class="py-3 px-3 text-center">0</td>
+                    <td id="sumExtra110" class="py-3 px-3 text-center">0</td>
+                    <td id="sumTotal110" class="py-3 px-3 text-right text-white font-bold">0</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="px-4 py-3 bg-slate-950/60 border-t border-slate-800 flex justify-between items-center text-xs font-bold">
+              <span class="text-purple-400">Combined Total Connections:</span>
+              <span id="sumConnections" class="text-white text-sm">0</span>
+            </div>
           </div>
-          <div>
-            <label class="block text-[10px] font-semibold text-slate-400 uppercase mb-1">Select Labour</label>
-            <select id="filterLabour" onchange="renderFilterData()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
-              <option value="">Select Labour (All)</option>
-            </select>
+
+          <!-- Monthly Download Button & 3 Format Options -->
+          <div class="space-y-2">
+            <button onclick="toggleElement('monthlyDownloadOptions')" class="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 transition">
+              <i class="fa-solid fa-download"></i>
+              <span>Download</span>
+            </button>
+
+            <div id="monthlyDownloadOptions" class="hidden flex flex-col gap-2 pt-1">
+              <button onclick="downloadMonthlyReport('csv')" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold text-xs border border-slate-700 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-file-csv"></i> As CSV
+              </button>
+              <button onclick="downloadMonthlyReport('excel')" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-green-400 font-bold text-xs border border-slate-700 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-file-excel"></i> As Excel
+              </button>
+              <button onclick="downloadMonthlyReport('pdf')" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-rose-400 font-bold text-xs border border-slate-700 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-file-pdf"></i> As PDF (A4)
+              </button>
+            </div>
           </div>
         </div>
 
-        <!-- Clear Date Filter helper if a specific date is active -->
-        <div id="clearDateWrap" class="hidden text-right">
-          <button onclick="clearDateFilter()" class="text-xs text-blue-400 underline">Switch back to Full Month View</button>
-        </div>
-
-        <!-- Filter Output Container -->
-        <div id="filterContentArea" class="space-y-4"></div>
+        <!-- MODE B: DATE-WISE PATTI LIST -->
+        <div id="datePattiListSection" class="hidden space-y-3"></div>
       </section>
 
-      <!-- ================= 8. PROFILE PAGE ================= -->
-      <section id="profileView" class="hidden space-y-5 pt-2">
-        <h2 class="text-lg font-bold text-white text-center">User Profile</h2>
-
-        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-3 shadow-lg">
-          <div class="flex items-center gap-3 pb-3 border-b border-slate-800">
-            <div class="w-12 h-12 rounded-2xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 text-lg font-bold">
-              <i class="fa-solid fa-user"></i>
-            </div>
-            <div>
-              <p id="profileUsername" class="text-base font-bold text-white">-</p>
-              <p id="profileEmail" class="text-xs text-slate-400">-</p>
-            </div>
+      <!-- ==========================================
+           8. PROFILE PAGE
+      =========================================== -->
+      <section id="page-profile" class="hidden space-y-6 py-2">
+        <div class="text-center space-y-2">
+          <div class="w-20 h-20 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center mx-auto text-3xl font-extrabold shadow-xl">
+            <span id="profileAvatarInitial">U</span>
           </div>
+          <h2 class="text-xl font-extrabold text-white">User Profile</h2>
+          <p class="text-xs text-slate-400">Registered account details</p>
+        </div>
 
-          <div class="space-y-2.5 pt-2">
-            <button onclick="handleLogout()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2.5 rounded-xl text-sm border border-slate-700 transition">
-              Logout
-            </button>
-            <button onclick="openDeleteAccountModal()" class="w-full bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/30 font-semibold py-2.5 rounded-xl text-sm transition">
-              Delete Account
-            </button>
+        <div class="glass-card p-5 rounded-2xl space-y-4">
+          <div>
+            <span class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400">User Name</span>
+            <p id="profileUsername" class="text-base font-bold text-white mt-0.5">-</p>
           </div>
+          <div class="border-t border-slate-800 pt-3">
+            <span class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400">Email ID</span>
+            <p id="profileEmail" class="text-sm font-semibold text-blue-400 mt-0.5">-</p>
+          </div>
+        </div>
+
+        <!-- 2 Vertical Buttons: Logout and Delete Account -->
+        <div class="flex flex-col gap-3 pt-2">
+          <button onclick="handleLogout()" class="w-full py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm border border-slate-700 flex items-center justify-center gap-2 transition">
+            <i class="fa-solid fa-right-from-bracket text-amber-400"></i>
+            <span>Logout</span>
+          </button>
+
+          <button onclick="openDeleteAccountModal()" class="w-full py-3.5 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 font-bold text-sm border border-rose-500/30 flex items-center justify-center gap-2 transition">
+            <i class="fa-solid fa-user-xmark"></i>
+            <span>Delete Account</span>
+          </button>
         </div>
       </section>
 
     </main>
 
-    <!-- BOTTOM NAVIGATION (Visible on Home, Filter, Profile) -->
-    <nav id="bottomNav" class="hidden fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[440px] bg-slate-950/95 backdrop-blur border-t border-slate-800 grid grid-cols-3 py-2 px-4 z-20">
-      <button onclick="switchTab('homeView')" id="navHomeBtn" class="flex flex-col items-center gap-1 py-1 text-blue-400">
-        <i class="fa-solid fa-house text-sm"></i>
-        <span class="text-[11px] font-semibold">Home</span>
+    <!-- BOTTOM NAVIGATION BAR (Visible when logged in) -->
+    <nav id="bottomNav" class="hidden absolute bottom-0 left-0 right-0 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 px-6 py-2 flex items-center justify-around z-20">
+      <button id="navBtn-home" onclick="switchMainTab('home')" class="flex flex-col items-center gap-1 py-1 px-4 rounded-xl text-blue-400 font-bold transition">
+        <i class="fa-solid fa-house text-base"></i>
+        <span class="text-[11px]">Home</span>
       </button>
-      <button onclick="switchTab('filterView')" id="navFilterBtn" class="flex flex-col items-center gap-1 py-1 text-slate-400">
-        <i class="fa-solid fa-filter text-sm"></i>
-        <span class="text-[11px] font-semibold">Filter</span>
+
+      <button id="navBtn-filter" onclick="switchMainTab('filter')" class="flex flex-col items-center gap-1 py-1 px-4 rounded-xl text-slate-400 hover:text-slate-200 font-medium transition">
+        <i class="fa-solid fa-filter text-base"></i>
+        <span class="text-[11px]">Filter</span>
       </button>
-      <button onclick="switchTab('profileView')" id="navProfileBtn" class="flex flex-col items-center gap-1 py-1 text-slate-400">
-        <i class="fa-solid fa-user text-sm"></i>
-        <span class="text-[11px] font-semibold">Profile</span>
+
+      <button id="navBtn-profile" onclick="switchMainTab('profile')" class="flex flex-col items-center gap-1 py-1 px-4 rounded-xl text-slate-400 hover:text-slate-200 font-medium transition">
+        <i class="fa-solid fa-user text-base"></i>
+        <span class="text-[11px]">Profile</span>
       </button>
     </nav>
 
-    <!-- TOAST MESSAGE (2 Seconds) -->
-    <div id="toastBox" class="hidden fixed bottom-16 left-1/2 -translate-x-1/2 bg-emerald-600 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-lg z-50">
-      Data Saved
-    </div>
-
-    <!-- EDIT REPORT DIALOG MODAL -->
-    <div id="editModal" class="hidden fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4">
-      <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-sm p-4 space-y-3 max-h-[90vh] overflow-y-auto">
-        <h3 class="text-base font-bold text-white">Edit Report</h3>
-        <input type="hidden" id="editReportId" />
-
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="text-[11px] text-slate-400">Date</label>
-            <input id="editDate" type="date" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white" />
-          </div>
-          <div>
-            <label class="text-[11px] text-slate-400">Title</label>
-            <input id="editTitle" type="text" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white" />
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="text-[11px] text-slate-400">Area</label>
-            <input id="editArea" type="text" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white" />
-          </div>
-          <div>
-            <label class="text-[11px] text-slate-400">Labour</label>
-            <input id="editLabour" type="text" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white" />
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="text-[11px] text-slate-400">63MM Count</label>
-            <input id="editC63" type="number" step="1" oninput="sanitizeIntegerInput(this)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white" />
-          </div>
-          <div>
-            <label class="text-[11px] text-slate-400">63MM +MTR</label>
-            <input id="editE63" type="number" step="1" oninput="sanitizeIntegerInput(this)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white" />
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="text-[11px] text-slate-400">90MM Count</label>
-            <input id="editC90" type="number" step="1" oninput="sanitizeIntegerInput(this)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white" />
-          </div>
-          <div>
-            <label class="text-[11px] text-slate-400">90MM +MTR</label>
-            <input id="editE90" type="number" step="1" oninput="sanitizeIntegerInput(this)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white" />
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="text-[11px] text-slate-400">110MM Count</label>
-            <input id="editC110" type="number" step="1" oninput="sanitizeIntegerInput(this)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white" />
-          </div>
-          <div>
-            <label class="text-[11px] text-slate-400">110MM +MTR</label>
-            <input id="editE110" type="number" step="1" oninput="sanitizeIntegerInput(this)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white" />
-          </div>
-        </div>
-
-        <div>
-          <label class="text-[11px] text-slate-400">Connections</label>
-          <input id="editConn" type="number" step="1" oninput="sanitizeIntegerInput(this)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white" />
-        </div>
-
-        <div class="flex gap-2 pt-2">
-          <button onclick="closeEditModal()" class="flex-1 bg-slate-800 text-slate-300 py-2 rounded-xl text-xs font-semibold">Cancel</button>
-          <button onclick="submitEditReport()" class="flex-1 bg-blue-600 text-white py-2 rounded-xl text-xs font-semibold">Done</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- DELETE ACCOUNT CONFIRM MODAL -->
-    <div id="deleteAccountModal" class="hidden fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4">
-      <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-xs p-5 space-y-4 text-center">
-        <p class="text-sm font-semibold text-white">Your data and account permanently deleted</p>
-        <div class="flex gap-2">
-          <button onclick="closeDeleteAccountModal()" class="flex-1 bg-slate-800 text-slate-300 py-2 rounded-xl text-xs font-semibold">Cancel</button>
-          <button onclick="confirmDeleteAccount()" class="flex-1 bg-rose-600 text-white py-2 rounded-xl text-xs font-semibold">Delete</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- INFO DIALOG MODAL (e.g. All data deleted) -->
-    <div id="infoModal" class="hidden fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4">
-      <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-xs p-5 space-y-4 text-center">
-        <p id="infoModalText" class="text-sm font-semibold text-white"></p>
-        <button onclick="closeInfoModal()" class="w-full bg-blue-600 text-white py-2 rounded-xl text-xs font-semibold">OK</button>
-      </div>
+    <!-- 2-SECOND BOTTOM TOAST ("Data Saved") -->
+    <div id="bottomToast" class="hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-full bg-emerald-600 text-white font-bold text-xs shadow-2xl flex items-center gap-2">
+      <i class="fa-solid fa-circle-check"></i>
+      <span id="bottomToastText">Data Saved</span>
     </div>
 
   </div>
 
+  <!-- ==========================================
+       MODAL 1: EDIT REPORT DIALOG
+  =========================================== -->
+  <div id="editReportModal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl p-5 space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-extrabold text-white">Edit Report</h3>
+        <button onclick="closeEditReportModal()" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <input type="hidden" id="editReportId" />
+
+      <div class="space-y-3 text-xs">
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-slate-400 font-semibold mb-1">Date</label>
+            <input id="editDate" type="date" class="input-field w-full px-3 py-2 rounded-lg" />
+          </div>
+          <div>
+            <label class="block text-slate-400 font-semibold mb-1">Title (City/Site)</label>
+            <input id="editTitle" type="text" class="input-field w-full px-3 py-2 rounded-lg font-bold text-amber-400" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-slate-400 font-semibold mb-1">Area</label>
+            <input id="editArea" type="text" class="input-field w-full px-3 py-2 rounded-lg" />
+          </div>
+          <div>
+            <label class="block text-slate-400 font-semibold mb-1">Labour Name</label>
+            <input id="editLabour" type="text" class="input-field w-full px-3 py-2 rounded-lg" />
+          </div>
+        </div>
+
+        <div class="border-t border-slate-800 pt-2">
+          <p class="font-bold text-slate-300 mb-2">Pipes Count & Extra MTR (Whole Numbers)</p>
+          <div class="grid grid-cols-2 gap-2 mb-2">
+            <div>
+              <label class="block text-amber-400 font-bold mb-1">63MM Pipe Count</label>
+              <input id="editCount63" type="text" inputmode="numeric" oninput="sanitizeWholeNumber(this)" class="input-field w-full px-3 py-2 rounded-lg" />
+            </div>
+            <div>
+              <label class="block text-amber-400 font-bold mb-1">63MM +MTR</label>
+              <input id="editExtra63" type="text" inputmode="numeric" oninput="sanitizeWholeNumber(this)" class="input-field w-full px-3 py-2 rounded-lg" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 mb-2">
+            <div>
+              <label class="block text-emerald-400 font-bold mb-1">90MM Pipe Count</label>
+              <input id="editCount90" type="text" inputmode="numeric" oninput="sanitizeWholeNumber(this)" class="input-field w-full px-3 py-2 rounded-lg" />
+            </div>
+            <div>
+              <label class="block text-emerald-400 font-bold mb-1">90MM +MTR</label>
+              <input id="editExtra90" type="text" inputmode="numeric" oninput="sanitizeWholeNumber(this)" class="input-field w-full px-3 py-2 rounded-lg" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-cyan-400 font-bold mb-1">110MM Pipe Count</label>
+              <input id="editCount110" type="text" inputmode="numeric" oninput="sanitizeWholeNumber(this)" class="input-field w-full px-3 py-2 rounded-lg" />
+            </div>
+            <div>
+              <label class="block text-cyan-400 font-bold mb-1">110MM +MTR</label>
+              <input id="editExtra110" type="text" inputmode="numeric" oninput="sanitizeWholeNumber(this)" class="input-field w-full px-3 py-2 rounded-lg" />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-purple-400 font-bold mb-1">Connections</label>
+          <input id="editConnections" type="text" inputmode="numeric" oninput="sanitizeWholeNumber(this)" class="input-field w-full px-3 py-2 rounded-lg" />
+        </div>
+      </div>
+
+      <button onclick="submitEditReport()" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg">
+        Done
+      </button>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL 2: INFO MESSAGE DIALOG (e.g., "All data deleted")
+  =========================================== -->
+  <div id="infoDialogModal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="w-full max-w-xs bg-slate-900 border border-slate-700 rounded-2xl p-5 text-center space-y-4 shadow-2xl">
+      <div class="w-12 h-12 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center mx-auto">
+        <i class="fa-solid fa-trash-can text-xl"></i>
+      </div>
+      <p id="infoDialogText" class="text-sm font-bold text-white">All data deleted</p>
+      <button onclick="closeInfoDialog()" class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs">
+        OK
+      </button>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL 3: DELETE ACCOUNT CONFIRMATION DIALOG
+  =========================================== -->
+  <div id="deleteAccountModal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="w-full max-w-xs bg-slate-900 border border-slate-700 rounded-2xl p-5 text-center space-y-4 shadow-2xl">
+      <div class="w-12 h-12 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center mx-auto">
+        <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+      </div>
+      <h4 class="text-base font-extrabold text-white">Delete Account?</h4>
+      <p class="text-xs text-slate-300 font-medium">Your data and account permanently deleted</p>
+      <div class="grid grid-cols-2 gap-2.5 pt-2">
+        <button onclick="closeDeleteAccountModal()" class="py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700">
+          Cancel
+        </button>
+        <button onclick="confirmDeleteAccount()" class="py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs">
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL 4: SUPABASE DB SETUP DIALOG
+  =========================================== -->
+  <div id="dbConfigModal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-sm font-extrabold text-white flex items-center gap-2">
+          <i class="fa-solid fa-database text-blue-400"></i>
+          <span>Supabase Database Connection</span>
+        </h3>
+        <button onclick="closeDbConfigModal()" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-400 leading-relaxed">
+        Paste your free <strong>Supabase Project URL</strong> and <strong>Anon Key</strong> below, or hardcode them inside <code>DEFAULT_SUPABASE_URL</code> in the script. When left blank, the app works automatically using LocalStorage.
+      </p>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-300 font-semibold mb-1">Supabase Project URL</label>
+          <input id="cfgSupabaseUrl" type="text" placeholder="https://xyzcompany.supabase.co" class="input-field w-full px-3 py-2 rounded-lg" />
+        </div>
+        <div>
+          <label class="block text-slate-300 font-semibold mb-1">Supabase Anon Public Key</label>
+          <input id="cfgSupabaseKey" type="text" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI..." class="input-field w-full px-3 py-2 rounded-lg" />
+        </div>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button onclick="saveDbConfig()" class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs">
+          Save & Connect
+        </button>
+        <button onclick="closeDbConfigModal()" class="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-300 font-semibold text-xs">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       APPLICATION JAVASCRIPT
+  =========================================== -->
   <script>
-    // =========================================================================
-    // 1. SUPABASE CONFIGURATION (Paste your publishable key below)
-    // =========================================================================
-    const DEFAULT_SUPABASE_URL = "https://wnpcjtlgjsylyrknwsza.supabase.co";
-    const DEFAULT_SUPABASE_ANON_KEY = "sb_publishable_hq0reQunEA_h2Z9_jlN_sg_MKMJ7l_T";
+    /**************************************************************
+     * 1. SUPABASE CONFIGURATION (OR LOCALSTORAGE FALLBACK)
+     * You can paste your Supabase URL and Anon Key directly here
+     * before pushing to GitHub/Vercel!
+     **************************************************************/
+    const DEFAULT_SUPABASE_URL = "https://wnpcjtlgjsylyrknwsza.supabase.co"; // e.g. "https://your-project.supabase.co"
+    const DEFAULT_SUPABASE_ANON_KEY = "sb_publishable_hq0reQunEA_h2Z9_jlN_sg_MKMJ7l_T"; // e.g. "eyJhbGciOiJIUzI1NiIs..."
 
     let supabaseClient = null;
-    let useSupabase = false;
-    let currentUser = null;
-    let resetTargetUser = null;
-    let cachedReports = [];
-
-    const monthNames = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
-    ];
+    let currentUser = null; // Holds logged-in user object
+    let resetTargetEmail = null; // Used during Forgot Password flow
+    let currentFilteredReports = []; // Holds reports for current filter
 
     function initDatabase() {
+      const url = localStorage.getItem("sp_supabase_url") || DEFAULT_SUPABASE_URL;
+      const key = localStorage.getItem("sp_supabase_key") || DEFAULT_SUPABASE_ANON_KEY;
       const badge = document.getElementById("dbStatusBadge");
-      if (
-        DEFAULT_SUPABASE_URL &&
-        DEFAULT_SUPABASE_ANON_KEY &&
-        DEFAULT_SUPABASE_ANON_KEY !== "PASTE_YOUR_SB_PUBLISHABLE_KEY_HERE" &&
-        window.supabase
-      ) {
+
+      if (url && key && window.supabase) {
         try {
-          supabaseClient = window.supabase.createClient(DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_ANON_KEY);
-          useSupabase = true;
-          if (badge) {
-            badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Supabase Live`;
-          }
-          return;
+          supabaseClient = window.supabase.createClient(url, key);
+          badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>`;
         } catch (err) {
           console.error("Supabase init error:", err);
+          supabaseClient = null;
         }
-      }
-      useSupabase = false;
-      if (badge) {
-        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Local Mode`;
-      }
-    }
-
-    // =========================================================================
-    // 2. INITIALIZATION ON PAGE REFRESH (Always open Login Page with saved creds)
-    // =========================================================================
-    window.addEventListener("DOMContentLoaded", () => {
-      initDatabase();
-      initYearDropdown();
-      setTodayDateOnHome();
-
-      // Always open Login Page on refresh & pre-fill saved credentials if available
-      const savedCreds = JSON.parse(localStorage.getItem("sp_last_login_creds") || "null");
-      if (savedCreds && savedCreds.email) {
-        document.getElementById("loginEmail").value = savedCreds.email;
-        document.getElementById("loginPassword").value = savedCreds.password || "";
-      }
-      showView("loginView");
-    });
-
-    function setTodayDateOnHome() {
-      const today = new Date().toISOString().split("T")[0];
-      document.getElementById("homeDate").value = today;
-    }
-
-    function initYearDropdown() {
-      const yearSelect = document.getElementById("filterYear");
-      const now = new Date();
-      const currentYear = now.getFullYear();
-      const currentMonth = now.getMonth() + 1;
-
-      yearSelect.innerHTML = "";
-      for (let y = currentYear - 3; y <= currentYear + 3; y++) {
-        const opt = document.createElement("option");
-        opt.value = y;
-        opt.textContent = y;
-        if (y === currentYear) opt.selected = true;
-        yearSelect.appendChild(opt);
-      }
-      document.getElementById("filterMonth").value = String(currentMonth);
-    }
-
-    // =========================================================================
-    // 3. VIEW NAVIGATION
-    // =========================================================================
-    function showView(viewId) {
-      const views = [
-        "loginView", "registerView", "forgotView", "resetView",
-        "homeView", "newReportView", "filterView", "profileView"
-      ];
-      views.forEach(v => document.getElementById(v).classList.add("hidden"));
-      document.getElementById(viewId).classList.remove("hidden");
-
-      const bottomNav = document.getElementById("bottomNav");
-      if (["homeView", "filterView", "profileView"].includes(viewId)) {
-        bottomNav.classList.remove("hidden");
-        updateNavHighlight(viewId);
       } else {
-        bottomNav.classList.add("hidden");
+        supabaseClient = null;
+        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Local DB Mode`;
       }
     }
 
-    function switchTab(viewId) {
-      showView(viewId);
-      if (viewId === "filterView") {
-        loadUserReportsAndRenderFilter();
-      } else if (viewId === "profileView" && currentUser) {
-        document.getElementById("profileUsername").textContent = currentUser.username;
-        document.getElementById("profileEmail").textContent = currentUser.email;
-      }
+    function openDbConfigModal() {
+      document.getElementById("cfgSupabaseUrl").value = localStorage.getItem("sp_supabase_url") || DEFAULT_SUPABASE_URL;
+      document.getElementById("cfgSupabaseKey").value = localStorage.getItem("sp_supabase_key") || DEFAULT_SUPABASE_ANON_KEY;
+      document.getElementById("dbConfigModal").classList.remove("hidden");
     }
 
-    function updateNavHighlight(activeViewId) {
-      const map = {
-        homeView: "navHomeBtn",
-        filterView: "navFilterBtn",
-        profileView: "navProfileBtn"
-      };
-      Object.entries(map).forEach(([view, btnId]) => {
-        const btn = document.getElementById(btnId);
-        if (view === activeViewId) {
-          btn.className = "flex flex-col items-center gap-1 py-1 text-blue-400";
-        } else {
-          btn.className = "flex flex-col items-center gap-1 py-1 text-slate-400";
-        }
-      });
+    function closeDbConfigModal() {
+      document.getElementById("dbConfigModal").classList.add("hidden");
     }
 
-    function backToLoginFromHome() {
-      currentUser = null;
-      showView("loginView");
+    function saveDbConfig() {
+      const url = document.getElementById("cfgSupabaseUrl").value.trim();
+      const key = document.getElementById("cfgSupabaseKey").value.trim();
+      localStorage.setItem("sp_supabase_url", url);
+      localStorage.setItem("sp_supabase_key", key);
+      initDatabase();
+      closeDbConfigModal();
+      showToast("Database Settings Updated");
     }
 
-    // =========================================================================
-    // 4. AUTHENTICATION (REGISTER, LOGIN, FORGOT, RESET)
-    // =========================================================================
-    async function getUserByEmail(email) {
+    /**************************************************************
+     * 2. DATABASE HELPER LAYER (WORKS WITH SUPABASE & LOCALSTORAGE)
+     **************************************************************/
+    function getLocalUsers() {
+      return JSON.parse(localStorage.getItem("sp_users") || "[]");
+    }
+    function setLocalUsers(users) {
+      localStorage.setItem("sp_users", JSON.stringify(users));
+    }
+    function getLocalReports() {
+      return JSON.parse(localStorage.getItem("sp_reports") || "[]");
+    }
+    function setLocalReports(reports) {
+      localStorage.setItem("sp_reports", JSON.stringify(reports));
+    }
+
+    async function dbFindUserByEmail(email) {
       const cleanEmail = email.trim().toLowerCase();
-      if (useSupabase) {
-        const { data } = await supabaseClient
+      if (supabaseClient) {
+        const { data, error } = await supabaseClient
           .from("app_users")
           .select("*")
           .eq("email", cleanEmail)
           .maybeSingle();
+        if (error) throw error;
         return data;
       } else {
-        const users = JSON.parse(localStorage.getItem("sp_users") || "[]");
+        const users = getLocalUsers();
         return users.find(u => u.email.toLowerCase() === cleanEmail) || null;
       }
     }
 
+    async function dbCreateUser(userObj) {
+      const payload = {
+        username: userObj.username.trim(),
+        email: userObj.email.trim().toLowerCase(),
+        password: userObj.password,
+        default_location: "Savarkundla",
+        default_area: "",
+        default_labour: ""
+      };
+      if (supabaseClient) {
+        const { data, error } = await supabaseClient
+          .from("app_users")
+          .insert([payload])
+          .select()
+          .single();
+        if (error) throw error;
+        return data;
+      } else {
+        const users = getLocalUsers();
+        payload.id = "usr_" + Date.now();
+        users.push(payload);
+        setLocalUsers(users);
+        return payload;
+      }
+    }
+
+    async function dbUpdateUserPassword(email, newPassword) {
+      const cleanEmail = email.trim().toLowerCase();
+      if (supabaseClient) {
+        const { error } = await supabaseClient
+          .from("app_users")
+          .update({ password: newPassword })
+          .eq("email", cleanEmail);
+        if (error) throw error;
+      } else {
+        const users = getLocalUsers();
+        const idx = users.findIndex(u => u.email.toLowerCase() === cleanEmail);
+        if (idx !== -1) {
+          users[idx].password = newPassword;
+          setLocalUsers(users);
+        }
+      }
+    }
+
+    async function dbUpdateUserDefaults(email, location, area, labour) {
+      const cleanEmail = email.trim().toLowerCase();
+      if (supabaseClient) {
+        await supabaseClient
+          .from("app_users")
+          .update({
+            default_location: location,
+            default_area: area,
+            default_labour: labour
+          })
+          .eq("email", cleanEmail);
+      } else {
+        const users = getLocalUsers();
+        const idx = users.findIndex(u => u.email.toLowerCase() === cleanEmail);
+        if (idx !== -1) {
+          users[idx].default_location = location;
+          users[idx].default_area = area;
+          users[idx].default_labour = labour;
+          setLocalUsers(users);
+        }
+      }
+    }
+
+    async function dbInsertReport(reportObj) {
+      if (supabaseClient) {
+        const { data, error } = await supabaseClient
+          .from("site_reports")
+          .insert([reportObj])
+          .select()
+          .single();
+        if (error) throw error;
+        return data;
+      } else {
+        const reports = getLocalReports();
+        reportObj.id = "rep_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
+        reports.push(reportObj);
+        setLocalReports(reports);
+        return reportObj;
+      }
+    }
+
+    async function dbGetUserReports(email) {
+      const cleanEmail = email.trim().toLowerCase();
+      if (supabaseClient) {
+        const { data, error } = await supabaseClient
+          .from("site_reports")
+          .select("*")
+          .eq("user_email", cleanEmail)
+          .order("report_date", { ascending: true });
+        if (error) throw error;
+        return data || [];
+      } else {
+        const reports = getLocalReports();
+        return reports.filter(r => r.user_email.toLowerCase() === cleanEmail);
+      }
+    }
+
+    async function dbUpdateReport(id, updatedFields) {
+      if (supabaseClient) {
+        const { error } = await supabaseClient
+          .from("site_reports")
+          .update(updatedFields)
+          .eq("id", id);
+        if (error) throw error;
+      } else {
+        const reports = getLocalReports();
+        const idx = reports.findIndex(r => String(r.id) === String(id));
+        if (idx !== -1) {
+          reports[idx] = { ...reports[idx], ...updatedFields };
+          setLocalReports(reports);
+        }
+      }
+    }
+
+    async function dbDeleteReport(id) {
+      if (supabaseClient) {
+        const { error } = await supabaseClient
+          .from("site_reports")
+          .delete()
+          .eq("id", id);
+        if (error) throw error;
+      } else {
+        const reports = getLocalReports().filter(r => String(r.id) !== String(id));
+        setLocalReports(reports);
+      }
+    }
+
+    async function dbDeleteUserAccountAndData(email) {
+      const cleanEmail = email.trim().toLowerCase();
+      if (supabaseClient) {
+        await supabaseClient.from("site_reports").delete().eq("user_email", cleanEmail);
+        await supabaseClient.from("app_users").delete().eq("email", cleanEmail);
+      } else {
+        const reports = getLocalReports().filter(r => r.user_email.toLowerCase() !== cleanEmail);
+        setLocalReports(reports);
+        const users = getLocalUsers().filter(u => u.email.toLowerCase() !== cleanEmail);
+        setLocalUsers(users);
+      }
+    }
+
+    /**************************************************************
+     * 3. PAGE NAVIGATION & REFRESH BEHAVIOR
+     * Every refresh opens Login Page directly with pre-filled
+     * credentials (if user logged in previously).
+     **************************************************************/
+    const ALL_PAGES = [
+      "page-login",
+      "page-register",
+      "page-forgot",
+      "page-reset",
+      "page-home",
+      "page-new-report",
+      "page-filter",
+      "page-profile"
+    ];
+
+    function showPage(pageId) {
+      ALL_PAGES.forEach(id => {
+        document.getElementById(id).classList.add("hidden");
+      });
+      document.getElementById(pageId).classList.remove("hidden");
+
+      // Hide error boxes on navigation
+      ["loginErrorBox", "registerErrorBox", "forgotErrorBox", "resetMsgBox"].forEach(boxId => {
+        const el = document.getElementById(boxId);
+        if (el) el.classList.add("hidden");
+      });
+
+      // Toggle bottom navigation visibility
+      const authPages = ["page-login", "page-register", "page-forgot", "page-reset"];
+      const bottomNav = document.getElementById("bottomNav");
+      if (authPages.includes(pageId)) {
+        bottomNav.classList.add("hidden");
+      } else {
+        bottomNav.classList.remove("hidden");
+      }
+    }
+
+    function populateLoginAutofill() {
+      const savedEmail = localStorage.getItem("sp_autofill_email") || "";
+      const savedPass = localStorage.getItem("sp_autofill_password") || "";
+      document.getElementById("loginEmail").value = savedEmail;
+      document.getElementById("loginPassword").value = savedPass;
+    }
+
+    function switchMainTab(tabName) {
+      // Update bottom nav button styles
+      ["home", "filter", "profile"].forEach(t => {
+        const btn = document.getElementById("navBtn-" + t);
+        if (t === tabName) {
+          btn.className = "flex flex-col items-center gap-1 py-1 px-4 rounded-xl text-blue-400 font-bold transition";
+        } else {
+          btn.className = "flex flex-col items-center gap-1 py-1 px-4 rounded-xl text-slate-400 hover:text-slate-200 font-medium transition";
+        }
+      });
+
+      if (tabName === "home") {
+        showPage("page-home");
+      } else if (tabName === "filter") {
+        showPage("page-filter");
+        initFilterDefaultsAndLoad();
+      } else if (tabName === "profile") {
+        showPage("page-profile");
+        renderProfilePage();
+      }
+    }
+
+    /**************************************************************
+     * 4. AUTHENTICATION FLOWS (LOGIN, REGISTER, FORGOT, RESET)
+     **************************************************************/
     async function handleRegister() {
       const username = document.getElementById("regUsername").value.trim();
       const email = document.getElementById("regEmail").value.trim().toLowerCase();
       const password = document.getElementById("regPassword").value;
       const rePassword = document.getElementById("regRePassword").value;
+      const errBox = document.getElementById("registerErrorBox");
 
-      if (!username || !email || !password) {
-        showInfoModal("Please fill all fields");
+      if (!username || !email || !password || !rePassword) {
+        errBox.textContent = "Please fill in all fields.";
+        errBox.classList.remove("hidden");
         return;
       }
       if (password !== rePassword) {
-        showInfoModal("Passwords do not match");
+        errBox.textContent = "Passwords do not match!";
+        errBox.classList.remove("hidden");
         return;
       }
 
-      const existing = await getUserByEmail(email);
-      if (existing) {
-        showInfoModal("Email ID is already registered");
-        return;
-      }
-
-      const newUser = {
-        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
-        username,
-        email,
-        password,
-        default_site_title: "Savarkundla",
-        default_area: "",
-        default_labour: ""
-      };
-
-      if (useSupabase) {
-        const { error } = await supabaseClient.from("app_users").insert([newUser]);
-        if (error) {
-          showInfoModal("Error: " + error.message);
+      try {
+        const existing = await dbFindUserByEmail(email);
+        if (existing) {
+          errBox.textContent = "Email ID is already registered!";
+          errBox.classList.remove("hidden");
           return;
         }
-      } else {
-        const users = JSON.parse(localStorage.getItem("sp_users") || "[]");
-        users.push(newUser);
-        localStorage.setItem("sp_users", JSON.stringify(users));
-      }
 
-      // First login after new register: user types credentials manually
-      document.getElementById("loginEmail").value = "";
-      document.getElementById("loginPassword").value = "";
-      showInfoModal("Registration Successful! Please Log In.");
-      showView("loginView");
+        await dbCreateUser({ username, email, password });
+
+        // Requirement: First login right after New Register must require typing credentials
+        localStorage.removeItem("sp_autofill_email");
+        localStorage.removeItem("sp_autofill_password");
+        document.getElementById("loginEmail").value = "";
+        document.getElementById("loginPassword").value = "";
+
+        // Clear registration inputs
+        document.getElementById("regUsername").value = "";
+        document.getElementById("regEmail").value = "";
+        document.getElementById("regPassword").value = "";
+        document.getElementById("regRePassword").value = "";
+
+        showToast("Registration Successful! Please Log In.");
+        showPage("page-login");
+      } catch (err) {
+        errBox.textContent = "Error: " + (err.message || "Could not register");
+        errBox.classList.remove("hidden");
+      }
     }
 
     async function handleLogin() {
       const email = document.getElementById("loginEmail").value.trim().toLowerCase();
       const password = document.getElementById("loginPassword").value;
+      const errBox = document.getElementById("loginErrorBox");
 
       if (!email || !password) {
-        showInfoModal("Please enter Email ID and Password");
+        errBox.textContent = "Please enter both Email ID and Password.";
+        errBox.classList.remove("hidden");
         return;
       }
 
-      const user = await getUserByEmail(email);
-      if (!user || user.password !== password) {
-        showInfoModal("Invalid Email ID or Password");
-        return;
+      try {
+        const user = await dbFindUserByEmail(email);
+        if (!user || user.password !== password) {
+          errBox.textContent = "Invalid Email ID or Password!";
+          errBox.classList.remove("hidden");
+          return;
+        }
+
+        currentUser = user;
+
+        // Save credentials so subsequent logouts/refreshes pre-fill Email & Password
+        localStorage.setItem("sp_autofill_email", email);
+        localStorage.setItem("sp_autofill_password", password);
+
+        // Set up Home Page defaults for this user
+        setTodayOnHomeDate();
+        document.getElementById("homeSiteTitle").value = user.default_location || "Savarkundla";
+        document.getElementById("homeAreaInput").value = user.default_area || "";
+        document.getElementById("homeLabourInput").value = user.default_labour || "";
+
+        switchMainTab("home");
+      } catch (err) {
+        errBox.textContent = "Login Error: " + (err.message || "Failed to login");
+        errBox.classList.remove("hidden");
       }
-
-      currentUser = user;
-      // Save credentials for auto-fill on future logouts or page refreshes
-      localStorage.setItem("sp_last_login_creds", JSON.stringify({ email: user.email, password: user.password }));
-
-      // Load persistent fields for this user (Savarkundla, Area, Labour)
-      setTodayDateOnHome();
-      document.getElementById("homeSiteTitle").value = user.default_site_title || "Savarkundla";
-      document.getElementById("homeArea").value = user.default_area || "";
-      document.getElementById("homeLabour").value = user.default_labour || "";
-
-      showView("homeView");
     }
 
     async function handleVerifyEmail() {
-      const email = document.getElementById("forgotEmail").value.trim().toLowerCase();
+      const email = document.getElementById("forgotEmailInput").value.trim().toLowerCase();
+      const errBox = document.getElementById("forgotErrorBox");
+
       if (!email) {
-        showInfoModal("Please enter Email ID");
+        errBox.textContent = "Please enter your Mail ID";
+        errBox.classList.remove("hidden");
         return;
       }
-      const user = await getUserByEmail(email);
-      if (!user) {
-        showInfoModal("Email ID is not registered");
-        return;
+
+      try {
+        const user = await dbFindUserByEmail(email);
+        if (!user) {
+          // Exact required message: "Email id is not registered"
+          errBox.textContent = "Email id is not registered";
+          errBox.classList.remove("hidden");
+          return;
+        }
+
+        resetTargetEmail = user.email;
+        document.getElementById("resetDisplayUsername").textContent = user.username;
+        document.getElementById("resetDisplayEmail").textContent = user.email;
+        document.getElementById("resetNewPassword").value = "";
+        document.getElementById("resetRetypePassword").value = "";
+        showPage("page-reset");
+      } catch (err) {
+        errBox.textContent = "Verification failed.";
+        errBox.classList.remove("hidden");
       }
-      resetTargetUser = user;
-      document.getElementById("resetUsernameDisplay").textContent = user.username;
-      document.getElementById("resetEmailDisplay").textContent = user.email;
-      document.getElementById("resetNewPassword").value = "";
-      document.getElementById("resetRetypePassword").value = "";
-      showView("resetView");
     }
 
     async function handleResetPassword() {
-      if (!resetTargetUser) return;
       const newPass = document.getElementById("resetNewPassword").value;
       const rePass = document.getElementById("resetRetypePassword").value;
+      const msgBox = document.getElementById("resetMsgBox");
 
-      if (!newPass || newPass !== rePass) {
-        showInfoModal("Passwords do not match");
+      if (!newPass || !rePass) {
+        msgBox.className = "p-3 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs font-semibold text-center";
+        msgBox.textContent = "Please enter and retype your new password.";
+        msgBox.classList.remove("hidden");
         return;
       }
 
-      if (useSupabase) {
-        await supabaseClient
-          .from("app_users")
-          .update({ password: newPass })
-          .eq("id", resetTargetUser.id);
-      } else {
-        const users = JSON.parse(localStorage.getItem("sp_users") || "[]");
-        const idx = users.findIndex(u => u.id === resetTargetUser.id);
-        if (idx > -1) {
-          users[idx].password = newPass;
-          localStorage.setItem("sp_users", JSON.stringify(users));
-        }
+      if (newPass !== rePass) {
+        msgBox.className = "p-3 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs font-semibold text-center";
+        msgBox.textContent = "Passwords do not match!";
+        msgBox.classList.remove("hidden");
+        return;
       }
 
-      localStorage.setItem("sp_last_login_creds", JSON.stringify({ email: resetTargetUser.email, password: newPass }));
-      document.getElementById("loginEmail").value = resetTargetUser.email;
-      document.getElementById("loginPassword").value = newPass;
-      showInfoModal("Password update successful");
+      try {
+        await dbUpdateUserPassword(resetTargetEmail, newPass);
+
+        // Update autofill if same email
+        if (localStorage.getItem("sp_autofill_email") === resetTargetEmail) {
+          localStorage.setItem("sp_autofill_password", newPass);
+          populateLoginAutofill();
+        }
+
+        msgBox.className = "p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold text-center";
+        msgBox.textContent = "Password update successful";
+        msgBox.classList.remove("hidden");
+      } catch (err) {
+        msgBox.className = "p-3 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs font-semibold text-center";
+        msgBox.textContent = "Failed to update password.";
+        msgBox.classList.remove("hidden");
+      }
     }
 
-    // =========================================================================
-    // 5. PERSISTENT HOME FIELDS (Savarkundla, Area, Labour per user)
-    // =========================================================================
-    async function savePersistentHomeFields() {
+    function goBackToLoginFromHome() {
+      currentUser = null;
+      populateLoginAutofill();
+      showPage("page-login");
+    }
+
+    function handleLogout() {
+      currentUser = null;
+      populateLoginAutofill();
+      showPage("page-login");
+    }
+
+    /**************************************************************
+     * 5. HOME PAGE & PERSISTENT FIELDS (SAVARKUNDLA, AREA, LABOUR)
+     **************************************************************/
+    function getTodayISO() {
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, "0");
+      const dd = String(now.getDate()).padStart(2, "0");
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function formatDisplayDate(isoDate) {
+      if (!isoDate) return "";
+      const parts = isoDate.split("-");
+      if (parts.length !== 3) return isoDate;
+      return `${parts[2]}-${parts[1]}-${parts[0]}`; // DD-MM-YYYY
+    }
+
+    function setTodayOnHomeDate() {
+      document.getElementById("homeDateInput").value = getTodayISO();
+    }
+
+    let persistTimeout = null;
+    function persistUserDefaults() {
       if (!currentUser) return;
-      const titleVal = document.getElementById("homeSiteTitle").value;
-      const areaVal = document.getElementById("homeArea").value;
-      const labourVal = document.getElementById("homeLabour").value;
+      const loc = document.getElementById("homeSiteTitle").value;
+      const area = document.getElementById("homeAreaInput").value;
+      const labour = document.getElementById("homeLabourInput").value;
 
-      currentUser.default_site_title = titleVal;
-      currentUser.default_area = areaVal;
-      currentUser.default_labour = labourVal;
+      currentUser.default_location = loc;
+      currentUser.default_area = area;
+      currentUser.default_labour = labour;
 
-      if (useSupabase) {
-        await supabaseClient
-          .from("app_users")
-          .update({
-            default_site_title: titleVal,
-            default_area: areaVal,
-            default_labour: labourVal
-          })
-          .eq("id", currentUser.id);
-      } else {
-        const users = JSON.parse(localStorage.getItem("sp_users") || "[]");
-        const idx = users.findIndex(u => u.id === currentUser.id);
-        if (idx > -1) {
-          users[idx] = currentUser;
-          localStorage.setItem("sp_users", JSON.stringify(users));
-        }
-      }
+      clearTimeout(persistTimeout);
+      persistTimeout = setTimeout(() => {
+        dbUpdateUserDefaults(currentUser.email, loc, area, labour);
+      }, 250);
     }
 
-    // =========================================================================
-    // 6. NEW REPORT & INTEGER-ONLY PIPE CALCULATIONS
-    // =========================================================================
-    function sanitizeIntegerInput(inputEl) {
-      // Only whole integers like 10, 5, 89 allowed (no 2.3 or 6.5)
+    /**************************************************************
+     * 6. NEW REPORT PAGE & PIPE / CONNECTION CALCULATIONS
+     * Whole numbers only (no decimals like 2.3).
+     * Total MTR = (Count * 6) + Extra MTR
+     **************************************************************/
+    function sanitizeWholeNumber(inputEl) {
       inputEl.value = inputEl.value.replace(/[^0-9]/g, "");
     }
 
-    function toggleExtraMtr(wrapId) {
-      const el = document.getElementById(wrapId);
-      el.classList.toggle("hidden");
+    function toggleExtraMtrSection() {
+      const container = document.getElementById("extraMtrContainer");
+      container.classList.toggle("hidden");
     }
 
-    function openNewReportView() {
-      ["count63", "extra63", "count90", "extra90", "count110", "extra110", "connectionsInput"].forEach(id => {
+    function openNewReportPage() {
+      // Clear previous unsaved report fields
+      ["count63", "count90", "count110", "extra63", "extra90", "extra110", "connectionsInput"].forEach(id => {
         document.getElementById(id).value = "";
       });
-      ["extra63Wrap", "extra90Wrap", "extra110Wrap"].forEach(id => {
-        document.getElementById(id).classList.add("hidden");
-      });
-      updateNewReportTotals();
-      showView("newReportView");
+      calculateNewReportTotals();
+
+      const selectedDate = document.getElementById("homeDateInput").value || getTodayISO();
+      document.getElementById("newReportDateBadge").textContent = "Date: " + formatDisplayDate(selectedDate);
+      showPage("page-new-report");
     }
 
-    function updateNewReportTotals() {
+    function calculateNewReportTotals() {
       const c63 = parseInt(document.getElementById("count63").value || "0", 10);
-      const e63 = parseInt(document.getElementById("extra63").value || "0", 10);
-      const t63 = (c63 * 6) + e63;
-      document.getElementById("total63Text").textContent = `Total - ${t63} MTR`;
-
       const c90 = parseInt(document.getElementById("count90").value || "0", 10);
-      const e90 = parseInt(document.getElementById("extra90").value || "0", 10);
-      const t90 = (c90 * 6) + e90;
-      document.getElementById("total90Text").textContent = `Total - ${t90} MTR`;
-
       const c110 = parseInt(document.getElementById("count110").value || "0", 10);
+
+      const e63 = parseInt(document.getElementById("extra63").value || "0", 10);
+      const e90 = parseInt(document.getElementById("extra90").value || "0", 10);
       const e110 = parseInt(document.getElementById("extra110").value || "0", 10);
+
+      const t63 = (c63 * 6) + e63;
+      const t90 = (c90 * 6) + e90;
       const t110 = (c110 * 6) + e110;
-      document.getElementById("total110Text").textContent = `Total - ${t110} MTR`;
+
+      document.getElementById("totalText63").textContent = `Total - ${t63}MTR`;
+      document.getElementById("totalText90").textContent = `Total - ${t90}MTR`;
+      document.getElementById("totalText110").textContent = `Total - ${t110}MTR`;
 
       const conn = parseInt(document.getElementById("connectionsInput").value || "0", 10);
-      document.getElementById("totalConnectionsText").textContent = `Total Connection: ${conn}`;
+      document.getElementById("totalConnectionText").textContent = `${conn}`;
     }
 
     async function handleSaveReport() {
       if (!currentUser) return;
 
-      const reportDate = document.getElementById("homeDate").value || new Date().toISOString().split("T")[0];
+      const reportDate = document.getElementById("homeDateInput").value || getTodayISO();
       const siteTitle = document.getElementById("homeSiteTitle").value.trim() || "Savarkundla";
-      const areaName = document.getElementById("homeArea").value.trim();
-      const labourName = document.getElementById("homeLabour").value.trim();
+      const area = document.getElementById("homeAreaInput").value.trim();
+      const labour = document.getElementById("homeLabourInput").value.trim();
 
       const c63 = parseInt(document.getElementById("count63").value || "0", 10);
-      const e63 = parseInt(document.getElementById("extra63").value || "0", 10);
       const c90 = parseInt(document.getElementById("count90").value || "0", 10);
-      const e90 = parseInt(document.getElementById("extra90").value || "0", 10);
       const c110 = parseInt(document.getElementById("count110").value || "0", 10);
-      const e110 = parseInt(document.getElementById("extra110").value || "0", 10);
-      const conn = parseInt(document.getElementById("connectionsInput").value || "0", 10);
 
-      const newReport = {
-        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
-        user_id: currentUser.id,
+      const e63 = parseInt(document.getElementById("extra63").value || "0", 10);
+      const e90 = parseInt(document.getElementById("extra90").value || "0", 10);
+      const e110 = parseInt(document.getElementById("extra110").value || "0", 10);
+
+      const t63 = (c63 * 6) + e63;
+      const t90 = (c90 * 6) + e90;
+      const t110 = (c110 * 6) + e110;
+
+      const connections = parseInt(document.getElementById("connectionsInput").value || "0", 10);
+
+      const reportPayload = {
+        user_email: currentUser.email,
         report_date: reportDate,
-        site_title: siteTitle,
-        area_name: areaName,
-        labour_name: labourName,
+        location_title: siteTitle,
+        area_name: area,
+        labour_name: labour,
         count_63: c63,
         extra_63: e63,
-        total_63: (c63 * 6) + e63,
+        total_63: t63,
         count_90: c90,
         extra_90: e90,
-        total_90: (c90 * 6) + e90,
+        total_90: t90,
         count_110: c110,
         extra_110: e110,
-        total_110: (c110 * 6) + e110,
-        connections: conn
+        total_110: t110,
+        connections: connections
       };
 
-      if (useSupabase) {
-        const { error } = await supabaseClient.from("site_reports").insert([newReport]);
-        if (error) {
-          showInfoModal("Error saving report: " + error.message);
-          return;
-        }
-      } else {
-        const reports = JSON.parse(localStorage.getItem("sp_reports") || "[]");
-        reports.push(newReport);
-        localStorage.setItem("sp_reports", JSON.stringify(reports));
-      }
+      try {
+        await dbUpdateUserDefaults(currentUser.email, siteTitle, area, labour);
+        await dbInsertReport(reportPayload);
 
-      // Show 2-sec toast & return to Home Page
-      const toast = document.getElementById("toastBox");
-      toast.classList.remove("hidden");
-      setTimeout(() => {
-        toast.classList.add("hidden");
-      }, 2000);
-
-      showView("homeView");
-    }
-
-    // =========================================================================
-    // 7. FILTER PAGE (DATE, MONTH, YEAR + AREA & LABOUR DROPDOWNS)
-    // =========================================================================
-    async function fetchUserReports() {
-      if (!currentUser) return [];
-      if (useSupabase) {
-        const { data } = await supabaseClient
-          .from("site_reports")
-          .select("*")
-          .eq("user_id", currentUser.id)
-          .order("report_date", { ascending: false });
-        return data || [];
-      } else {
-        const all = JSON.parse(localStorage.getItem("sp_reports") || "[]");
-        return all.filter(r => r.user_id === currentUser.id);
+        // Show 2-second bottom toast "Data Saved" and return to Home Page
+        showToast("Data Saved", 2000);
+        switchMainTab("home");
+      } catch (err) {
+        showToast("Error saving report", 2000);
       }
     }
 
-    async function loadUserReportsAndRenderFilter() {
-      cachedReports = await fetchUserReports();
-      populateAreaAndLabourDropdowns(cachedReports);
-      renderFilterData();
+    /**************************************************************
+     * 7. FILTER PAGE (MONTHLY COMBINED & DATE-WISE PATTI VIEW)
+     **************************************************************/
+    function populateYearDropdown() {
+      const yearSelect = document.getElementById("filterYearSelect");
+      const currentYear = new Date().getFullYear();
+      yearSelect.innerHTML = "";
+      for (let y = currentYear - 4; y <= currentYear + 4; y++) {
+        const opt = document.createElement("option");
+        opt.value = String(y);
+        opt.textContent = String(y);
+        if (y === currentYear) opt.selected = true;
+        yearSelect.appendChild(opt);
+      }
     }
 
-    function populateAreaAndLabourDropdowns(reports) {
-      const areaSelect = document.getElementById("filterArea");
-      const labourSelect = document.getElementById("filterLabour");
+    function initFilterDefaultsAndLoad() {
+      // By default: Select Date has NO date selected, Month & Year have Current Month & Current Year
+      document.getElementById("filterDateInput").value = "";
+      const now = new Date();
+      const curMonth = String(now.getMonth() + 1).padStart(2, "0");
+      const curYear = String(now.getFullYear());
 
-      const prevArea = areaSelect.value;
-      const prevLabour = labourSelect.value;
+      populateYearDropdown();
+      document.getElementById("filterMonthSelect").value = curMonth;
+      document.getElementById("filterYearSelect").value = curYear;
 
-      const uniqueAreas = [...new Set(reports.map(r => (r.area_name || "").trim()).filter(Boolean))].sort();
-      const uniqueLabours = [...new Set(reports.map(r => (r.labour_name || "").trim()).filter(Boolean))].sort();
-
-      areaSelect.innerHTML = `<option value="">Select Area (All)</option>` +
-        uniqueAreas.map(a => `<option value="${a}">${a}</option>`).join("");
-
-      labourSelect.innerHTML = `<option value="">Select Labour (All)</option>` +
-        uniqueLabours.map(l => `<option value="${l}">${l}</option>`).join("");
-
-      if (uniqueAreas.includes(prevArea)) areaSelect.value = prevArea;
-      if (uniqueLabours.includes(prevLabour)) labourSelect.value = prevLabour;
+      refreshFilterView();
     }
 
     function onFilterDateChange() {
-      const dateVal = document.getElementById("filterDate").value;
-      document.getElementById("clearDateWrap").classList.toggle("hidden", !dateVal);
-      renderFilterData();
+      const pickedDate = document.getElementById("filterDateInput").value;
+      if (pickedDate) {
+        const [yyyy, mm] = pickedDate.split("-");
+        document.getElementById("filterMonthSelect").value = mm;
+        document.getElementById("filterYearSelect").value = yyyy;
+      }
+      refreshFilterView();
     }
 
     function onFilterMonthYearChange() {
-      document.getElementById("filterDate").value = "";
-      document.getElementById("clearDateWrap").classList.add("hidden");
-      renderFilterData();
+      // When user changes Month or Year dropdown, clear specific date so whole month combined data shows
+      document.getElementById("filterDateInput").value = "";
+      refreshFilterView();
     }
 
     function clearDateFilter() {
-      document.getElementById("filterDate").value = "";
-      document.getElementById("clearDateWrap").classList.add("hidden");
-      renderFilterData();
+      document.getElementById("filterDateInput").value = "";
+      refreshFilterView();
     }
 
-    function renderFilterData() {
-      const container = document.getElementById("filterContentArea");
-      const selectedDate = document.getElementById("filterDate").value;
-      const selectedMonth = parseInt(document.getElementById("filterMonth").value, 10);
-      const selectedYear = parseInt(document.getElementById("filterYear").value, 10);
-      const selectedArea = document.getElementById("filterArea").value;
-      const selectedLabour = document.getElementById("filterLabour").value;
+    async function refreshFilterView() {
+      if (!currentUser) return;
 
-      let filtered = [...cachedReports];
+      const allReports = await dbGetUserReports(currentUser.email);
+      const selectedDate = document.getElementById("filterDateInput").value;
+      const selectedMonth = document.getElementById("filterMonthSelect").value;
+      const selectedYear = document.getElementById("filterYearSelect").value;
 
-      // Filter by Area & Labour if selected
-      if (selectedArea) {
-        filtered = filtered.filter(r => (r.area_name || "").trim() === selectedArea);
-      }
-      if (selectedLabour) {
-        filtered = filtered.filter(r => (r.labour_name || "").trim() === selectedLabour);
-      }
+      const noDataBox = document.getElementById("filterNoDataBox");
+      const monthlySection = document.getElementById("monthlySummarySection");
+      const datePattiSection = document.getElementById("datePattiListSection");
+      const activeDateBanner = document.getElementById("activeDateFilterBanner");
 
-      // CASE A: Specific Date Selected -> Show Patti List
+      noDataBox.classList.add("hidden");
+      monthlySection.classList.add("hidden");
+      datePattiSection.classList.add("hidden");
+
       if (selectedDate) {
-        const dateReports = filtered.filter(r => r.report_date === selectedDate);
-        if (dateReports.length === 0) {
-          container.innerHTML = `<div class="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center text-sm text-slate-400 font-semibold">No Data</div>`;
-          return;
+        // MODE B: Specific Date Selected -> Show Patti strips
+        activeDateBanner.classList.remove("hidden");
+        document.getElementById("activeDateLabel").textContent = formatDisplayDate(selectedDate);
+
+        currentFilteredReports = allReports.filter(r => r.report_date === selectedDate);
+        if (currentFilteredReports.length === 0) {
+          noDataBox.classList.remove("hidden");
+        } else {
+          renderDatePattiList(currentFilteredReports);
+          datePattiSection.classList.remove("hidden");
         }
+      } else {
+        // MODE A: Month & Year Combined Data
+        activeDateBanner.classList.add("hidden");
+        const prefix = `${selectedYear}-${selectedMonth}`;
+        currentFilteredReports = allReports.filter(r => r.report_date && r.report_date.startsWith(prefix));
 
-        container.innerHTML = dateReports.map((rep, idx) => `
-          <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-md">
-            <!-- Patti Bar -->
-            <div onclick="togglePattiDetail('pattiDetail_${rep.id}')" class="px-4 py-3 bg-slate-950/80 flex items-center justify-between cursor-pointer hover:bg-slate-900 transition">
-              <div>
-                <p class="text-xs font-bold text-white">#${idx + 1} - ${rep.site_title || 'Savarkundla'}</p>
-                <p class="text-[11px] text-slate-400">Area: ${rep.area_name || '-'} | Labour: ${rep.labour_name || '-'}</p>
-              </div>
-              <div class="flex items-center gap-2" onclick="event.stopPropagation()">
-                <button onclick="openEditModal('${rep.id}')" class="px-2.5 py-1 rounded-lg bg-blue-600/20 text-blue-400 border border-blue-500/30 text-xs font-semibold">Edit</button>
-                <button onclick="deleteSingleReport('${rep.id}')" class="px-2.5 py-1 rounded-lg bg-rose-600/20 text-rose-400 border border-rose-500/30 text-xs font-semibold">Delete</button>
-              </div>
-            </div>
-
-            <!-- Expandable Patti Details -->
-            <div id="pattiDetail_${rep.id}" class="hidden p-4 space-y-3 border-t border-slate-800">
-              ${buildPipeSummaryTableHTML([rep])}
-              <div class="pt-2">
-                <button onclick="toggleDownloadMenu('dlMenu_${rep.id}')" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 rounded-xl text-xs">
-                  Download
-                </button>
-                <div id="dlMenu_${rep.id}" class="hidden flex flex-col gap-1.5 mt-2">
-                  <button onclick="downloadReportData([getReportById('${rep.id}')], 'csv', '${ formatDateDDMMYYYY(rep.report_date) }')" class="w-full bg-slate-800 hover:bg-slate-700 text-white py-2 rounded-lg text-xs font-semibold">As CSV</button>
-                  <button onclick="downloadReportData([getReportById('${rep.id}')], 'excel', '${ formatDateDDMMYYYY(rep.report_date) }')" class="w-full bg-slate-800 hover:bg-slate-700 text-white py-2 rounded-lg text-xs font-semibold">As Excel</button>
-                  <button onclick="downloadReportData([getReportById('${rep.id}')], 'pdf', '${ formatDateDDMMYYYY(rep.report_date) }')" class="w-full bg-slate-800 hover:bg-slate-700 text-white py-2 rounded-lg text-xs font-semibold">As PDF</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        `).join("");
-        return;
+        if (currentFilteredReports.length === 0) {
+          noDataBox.classList.remove("hidden");
+        } else {
+          renderMonthlyCombinedTable(currentFilteredReports, selectedMonth, selectedYear);
+          monthlySection.classList.remove("hidden");
+        }
       }
+    }
 
-      // CASE B: Combined Month + Year View
-      const monthReports = filtered.filter(r => {
-        if (!r.report_date) return false;
-        const [y, m] = r.report_date.split("-").map(Number);
-        return y === selectedYear && m === selectedMonth;
+    function renderMonthlyCombinedTable(reports, monthVal, yearVal) {
+      let p63 = 0, e63 = 0, t63 = 0;
+      let p90 = 0, e90 = 0, t90 = 0;
+      let p110 = 0, e110 = 0, t110 = 0;
+      let conn = 0;
+
+      reports.forEach(r => {
+        p63 += Number(r.count_63 || 0);
+        e63 += Number(r.extra_63 || 0);
+        t63 += Number(r.total_63 || 0);
+
+        p90 += Number(r.count_90 || 0);
+        e90 += Number(r.extra_90 || 0);
+        t90 += Number(r.total_90 || 0);
+
+        p110 += Number(r.count_110 || 0);
+        e110 += Number(r.extra_110 || 0);
+        t110 += Number(r.total_110 || 0);
+
+        conn += Number(r.connections || 0);
       });
 
-      if (monthReports.length === 0) {
-        container.innerHTML = `<div class="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center text-sm text-slate-400 font-semibold">No Data</div>`;
-        return;
-      }
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const mLabel = monthNames[parseInt(monthVal, 10) - 1] || monthVal;
 
-      const periodLabel = `${monthNames[selectedMonth - 1]} ${selectedYear}`;
-      container.innerHTML = `
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-4">
-          ${buildPipeSummaryTableHTML(monthReports)}
-          <div>
-            <button onclick="toggleDownloadMenu('monthDlMenu')" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-xl text-xs shadow-lg shadow-blue-600/30">
-              Download
-            </button>
-            <div id="monthDlMenu" class="hidden flex flex-col gap-2 mt-2.5">
-              <button onclick="triggerCurrentMonthDownload('csv', '${periodLabel}')" class="w-full bg-slate-800 hover:bg-slate-700 text-white py-2 rounded-xl text-xs font-semibold">As CSV</button>
-              <button onclick="triggerCurrentMonthDownload('excel', '${periodLabel}')" class="w-full bg-slate-800 hover:bg-slate-700 text-white py-2 rounded-xl text-xs font-semibold">As Excel</button>
-              <button onclick="triggerCurrentMonthDownload('pdf', '${periodLabel}')" class="w-full bg-slate-800 hover:bg-slate-700 text-white py-2 rounded-xl text-xs font-semibold">As PDF</button>
+      document.getElementById("monthlySummaryHeaderTitle").textContent = currentUser.default_location || "Savarkundla";
+      document.getElementById("monthlySummaryPeriod").textContent = `${mLabel} ${yearVal} (${reports.length} Reports)`;
+
+      document.getElementById("sumPipe63").textContent = p63;
+      document.getElementById("sumExtra63").textContent = e63;
+      document.getElementById("sumTotal63").textContent = t63;
+
+      document.getElementById("sumPipe90").textContent = p90;
+      document.getElementById("sumExtra90").textContent = e90;
+      document.getElementById("sumTotal90").textContent = t90;
+
+      document.getElementById("sumPipe110").textContent = p110;
+      document.getElementById("sumExtra110").textContent = e110;
+      document.getElementById("sumTotal110").textContent = t110;
+
+      document.getElementById("sumConnections").textContent = conn;
+      document.getElementById("monthlyDownloadOptions").classList.add("hidden");
+    }
+
+    function renderDatePattiList(reports) {
+      const container = document.getElementById("datePattiListSection");
+      container.innerHTML = "";
+
+      reports.forEach((rep, index) => {
+        const detailId = `pattiDetail_${rep.id}`;
+        const dlMenuId = `pattiDlMenu_${rep.id}`;
+
+        const pattiCard = document.createElement("div");
+        pattiCard.className = "glass-card rounded-2xl overflow-hidden border border-slate-800 transition";
+
+        pattiCard.innerHTML = `
+          <!-- Horizontal Strip (Patti) -->
+          <div onclick="toggleElement('${detailId}')" class="px-4 py-3.5 bg-slate-900/90 hover:bg-slate-800/80 cursor-pointer flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <span class="w-6 h-6 rounded-lg bg-blue-600/20 border border-blue-500/30 text-blue-400 text-xs font-extrabold flex items-center justify-center shrink-0">
+                ${index + 1}
+              </span>
+              <div class="truncate">
+                <p class="text-xs font-extrabold text-amber-400 truncate">${escapeHtml(rep.location_title || 'Savarkundla')} ${rep.area_name ? '• ' + escapeHtml(rep.area_name) : ''}</p>
+                <p class="text-[11px] text-slate-400 truncate">Labour: ${escapeHtml(rep.labour_name || '-')} | Conn: ${rep.connections || 0}</p>
+              </div>
+            </div>
+
+            <!-- Edit & Delete Buttons on Patti -->
+            <div class="flex items-center gap-1.5 shrink-0" onclick="event.stopPropagation()">
+              <button onclick="openEditReportModal('${rep.id}')" class="px-2.5 py-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 text-[11px] font-bold flex items-center gap-1">
+                <i class="fa-solid fa-pen"></i> Edit
+              </button>
+              <button onclick="handleDeleteReport('${rep.id}')" class="px-2.5 py-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/30 text-[11px] font-bold flex items-center gap-1">
+                <i class="fa-solid fa-trash"></i> Delete
+              </button>
             </div>
           </div>
-        </div>
-      `;
+
+          <!-- Expandable Full Report Details when Patti is clicked -->
+          <div id="${detailId}" class="hidden p-4 bg-slate-950/70 border-t border-slate-800 space-y-3 text-xs">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+              <span class="text-slate-400">Date: <strong class="text-white">${formatDisplayDate(rep.report_date)}</strong></span>
+              <span class="text-amber-400 font-extrabold text-sm">${escapeHtml(rep.location_title || 'Savarkundla')}</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 text-slate-300">
+              <div>Area Name: <strong class="text-white">${escapeHtml(rep.area_name || '-')}</strong></div>
+              <div>Labour Name: <strong class="text-white">${escapeHtml(rep.labour_name || '-')}</strong></div>
+            </div>
+
+            <div class="overflow-x-auto rounded-xl border border-slate-800">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="bg-slate-900 text-slate-400 border-b border-slate-800 text-[10px] uppercase">
+                    <th class="py-2 px-2.5">PVC</th>
+                    <th class="py-2 px-2.5 text-center">PIPE</th>
+                    <th class="py-2 px-2.5 text-center">EXTRA MTR</th>
+                    <th class="py-2 px-2.5 text-right">TOTAL MTR</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800 font-semibold">
+                  <tr>
+                    <td class="py-2 px-2.5 text-amber-400">63MM</td>
+                    <td class="py-2 px-2.5 text-center">${rep.count_63 || 0}</td>
+                    <td class="py-2 px-2.5 text-center">${rep.extra_63 || 0}</td>
+                    <td class="py-2 px-2.5 text-right text-white">${rep.total_63 || 0}</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2 px-2.5 text-emerald-400">90MM</td>
+                    <td class="py-2 px-2.5 text-center">${rep.count_90 || 0}</td>
+                    <td class="py-2 px-2.5 text-center">${rep.extra_90 || 0}</td>
+                    <td class="py-2 px-2.5 text-right text-white">${rep.total_90 || 0}</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2 px-2.5 text-cyan-400">110MM</td>
+                    <td class="py-2 px-2.5 text-center">${rep.count_110 || 0}</td>
+                    <td class="py-2 px-2.5 text-center">${rep.extra_110 || 0}</td>
+                    <td class="py-2 px-2.5 text-right text-white">${rep.total_110 || 0}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="flex justify-between items-center px-3 py-2 rounded-lg bg-slate-900 font-bold">
+              <span class="text-purple-400">Connections:</span>
+              <span class="text-white">${rep.connections || 0}</span>
+            </div>
+
+            <!-- Single Report Download Button & 3 Vertical Buttons -->
+            <div class="pt-1 space-y-2">
+              <button onclick="toggleElement('${dlMenuId}')" class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-2">
+                <i class="fa-solid fa-download"></i> Download Report
+              </button>
+
+              <div id="${dlMenuId}" class="hidden flex flex-col gap-2 pt-1">
+                <button onclick="downloadSingleReport('${rep.id}', 'csv')" class="w-full py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold text-xs border border-slate-700">
+                  As CSV
+                </button>
+                <button onclick="downloadSingleReport('${rep.id}', 'excel')" class="w-full py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-green-400 font-bold text-xs border border-slate-700">
+                  As Excel
+                </button>
+                <button onclick="downloadSingleReport('${rep.id}', 'pdf')" class="w-full py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-rose-400 font-bold text-xs border border-slate-700">
+                  As PDF (A4)
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+        container.appendChild(pattiCard);
+      });
     }
 
-    function buildPipeSummaryTableHTML(reportsList) {
-      const sum = calculateCombinedTotals(reportsList);
-      const uniqueAreas = [...new Set(reportsList.map(r => (r.area_name || "").trim()).filter(Boolean))].join(", ") || "-";
-      const uniqueLabours = [...new Set(reportsList.map(r => (r.labour_name || "").trim()).filter(Boolean))].join(", ") || "-";
-
-      return `
-        <div class="text-xs space-y-1 bg-slate-950 p-3 rounded-xl border border-slate-800">
-          <p class="text-slate-400">Area Name: <span class="text-white font-semibold">${uniqueAreas}</span></p>
-          <p class="text-slate-400">Labour Name: <span class="text-white font-semibold">${uniqueLabours}</span></p>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr class="border-b border-slate-800 text-slate-400">
-                <th class="py-2 px-2">PVC</th>
-                <th class="py-2 px-2">PIPE</th>
-                <th class="py-2 px-2">EXTRA MTR</th>
-                <th class="py-2 px-2">TOTAL MTR</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-800/60 font-semibold">
-              <tr>
-                <td class="py-2.5 px-2 text-blue-400">63MM</td>
-                <td class="py-2.5 px-2">${sum.c63}</td>
-                <td class="py-2.5 px-2">${sum.e63}</td>
-                <td class="py-2.5 px-2">${sum.t63}</td>
-              </tr>
-              <tr>
-                <td class="py-2.5 px-2 text-emerald-400">90MM</td>
-                <td class="py-2.5 px-2">${sum.c90}</td>
-                <td class="py-2.5 px-2">${sum.e90}</td>
-                <td class="py-2.5 px-2">${sum.t90}</td>
-              </tr>
-              <tr>
-                <td class="py-2.5 px-2 text-amber-400">110MM</td>
-                <td class="py-2.5 px-2">${sum.c110}</td>
-                <td class="py-2.5 px-2">${sum.e110}</td>
-                <td class="py-2.5 px-2">${sum.t110}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="pt-1 border-t border-slate-800 flex justify-between text-xs font-bold text-purple-300">
-          <span>Total Connections</span>
-          <span>${sum.conn}</span>
-        </div>
-      `;
+    /**************************************************************
+     * 8. EDIT & DELETE REPORT DIALOG HANDLERS
+     **************************************************************/
+    async function handleDeleteReport(reportId) {
+      await dbDeleteReport(reportId);
+      await refreshFilterView();
+      // Open dialogue saying "All data deleted"
+      document.getElementById("infoDialogText").textContent = "All data deleted";
+      document.getElementById("infoDialogModal").classList.remove("hidden");
     }
 
-    function calculateCombinedTotals(reportsList) {
-      return reportsList.reduce((acc, r) => {
-        acc.c63 += Number(r.count_63 || 0);
-        acc.e63 += Number(r.extra_63 || 0);
-        acc.t63 += Number(r.total_63 || 0);
-        acc.c90 += Number(r.count_90 || 0);
-        acc.e90 += Number(r.extra_90 || 0);
-        acc.t90 += Number(r.total_90 || 0);
-        acc.c110 += Number(r.count_110 || 0);
-        acc.e110 += Number(r.extra_110 || 0);
-        acc.t110 += Number(r.total_110 || 0);
-        acc.conn += Number(r.connections || 0);
-        return acc;
-      }, { c63: 0, e63: 0, t63: 0, c90: 0, e90: 0, t90: 0, c110: 0, e110: 0, t110: 0, conn: 0 });
+    function closeInfoDialog() {
+      document.getElementById("infoDialogModal").classList.add("hidden");
     }
 
-    function togglePattiDetail(id) {
-      document.getElementById(id)?.classList.toggle("hidden");
-    }
-
-    function toggleDownloadMenu(id) {
-      document.getElementById(id)?.classList.toggle("hidden");
-    }
-
-    function getReportById(id) {
-      return cachedReports.find(r => r.id === id);
-    }
-
-    // =========================================================================
-    // 8. EDIT & DELETE REPORT FROM PATTI
-    // =========================================================================
-    async function deleteSingleReport(reportId) {
-      if (useSupabase) {
-        await supabaseClient.from("site_reports").delete().eq("id", reportId);
-      } else {
-        const all = JSON.parse(localStorage.getItem("sp_reports") || "[]");
-        localStorage.setItem("sp_reports", JSON.stringify(all.filter(r => r.id !== reportId)));
-      }
-      showInfoModal("All data deleted");
-      await loadUserReportsAndRenderFilter();
-    }
-
-    function openEditModal(reportId) {
-      const rep = getReportById(reportId);
+    function openEditReportModal(reportId) {
+      const rep = currentFilteredReports.find(r => String(r.id) === String(reportId));
       if (!rep) return;
+
       document.getElementById("editReportId").value = rep.id;
       document.getElementById("editDate").value = rep.report_date;
-      document.getElementById("editTitle").value = rep.site_title || "Savarkundla";
+      document.getElementById("editTitle").value = rep.location_title || "Savarkundla";
       document.getElementById("editArea").value = rep.area_name || "";
       document.getElementById("editLabour").value = rep.labour_name || "";
-      document.getElementById("editC63").value = rep.count_63 || 0;
-      document.getElementById("editE63").value = rep.extra_63 || 0;
-      document.getElementById("editC90").value = rep.count_90 || 0;
-      document.getElementById("editE90").value = rep.extra_90 || 0;
-      document.getElementById("editC110").value = rep.count_110 || 0;
-      document.getElementById("editE110").value = rep.extra_110 || 0;
-      document.getElementById("editConn").value = rep.connections || 0;
 
-      document.getElementById("editModal").classList.remove("hidden");
+      document.getElementById("editCount63").value = rep.count_63 || 0;
+      document.getElementById("editExtra63").value = rep.extra_63 || 0;
+
+      document.getElementById("editCount90").value = rep.count_90 || 0;
+      document.getElementById("editExtra90").value = rep.extra_90 || 0;
+
+      document.getElementById("editCount110").value = rep.count_110 || 0;
+      document.getElementById("editExtra110").value = rep.extra_110 || 0;
+
+      document.getElementById("editConnections").value = rep.connections || 0;
+
+      document.getElementById("editReportModal").classList.remove("hidden");
     }
 
-    function closeEditModal() {
-      document.getElementById("editModal").classList.add("hidden");
+    function closeEditReportModal() {
+      document.getElementById("editReportModal").classList.add("hidden");
     }
 
     async function submitEditReport() {
       const id = document.getElementById("editReportId").value;
-      const c63 = parseInt(document.getElementById("editC63").value || "0", 10);
-      const e63 = parseInt(document.getElementById("editE63").value || "0", 10);
-      const c90 = parseInt(document.getElementById("editC90").value || "0", 10);
-      const e90 = parseInt(document.getElementById("editE90").value || "0", 10);
-      const c110 = parseInt(document.getElementById("editC110").value || "0", 10);
-      const e110 = parseInt(document.getElementById("editE110").value || "0", 10);
-      const conn = parseInt(document.getElementById("editConn").value || "0", 10);
+      const c63 = parseInt(document.getElementById("editCount63").value || "0", 10);
+      const e63 = parseInt(document.getElementById("editExtra63").value || "0", 10);
+      const c90 = parseInt(document.getElementById("editCount90").value || "0", 10);
+      const e90 = parseInt(document.getElementById("editExtra90").value || "0", 10);
+      const c110 = parseInt(document.getElementById("editCount110").value || "0", 10);
+      const e110 = parseInt(document.getElementById("editExtra110").value || "0", 10);
 
-      const updatedFields = {
+      const updated = {
         report_date: document.getElementById("editDate").value,
-        site_title: document.getElementById("editTitle").value.trim() || "Savarkundla",
+        location_title: document.getElementById("editTitle").value.trim() || "Savarkundla",
         area_name: document.getElementById("editArea").value.trim(),
         labour_name: document.getElementById("editLabour").value.trim(),
         count_63: c63,
@@ -1193,130 +1681,165 @@
         count_110: c110,
         extra_110: e110,
         total_110: (c110 * 6) + e110,
-        connections: conn
+        connections: parseInt(document.getElementById("editConnections").value || "0", 10)
       };
 
-      if (useSupabase) {
-        await supabaseClient.from("site_reports").update(updatedFields).eq("id", id);
-      } else {
-        const all = JSON.parse(localStorage.getItem("sp_reports") || "[]");
-        const idx = all.findIndex(r => r.id === id);
-        if (idx > -1) {
-          all[idx] = { ...all[idx], ...updatedFields };
-          localStorage.setItem("sp_reports", JSON.stringify(all));
-        }
-      }
-
-      closeEditModal();
-      await loadUserReportsAndRenderFilter();
+      await dbUpdateReport(id, updated);
+      closeEditReportModal();
+      await refreshFilterView();
+      showToast("Report Updated");
     }
 
-    // =========================================================================
-    // 9. EXPORT / DOWNLOAD (CSV, EXCEL, A4 PDF) WITH MULTI-AREA / MULTI-LABOUR
-    // =========================================================================
-    function triggerCurrentMonthDownload(format, periodLabel) {
-      const selectedMonth = parseInt(document.getElementById("filterMonth").value, 10);
-      const selectedYear = parseInt(document.getElementById("filterYear").value, 10);
-      const selectedArea = document.getElementById("filterArea").value;
-      const selectedLabour = document.getElementById("filterLabour").value;
+    /**************************************************************
+     * 9. DOWNLOAD EXPORTS (CSV, EXCEL, A4 PDF)
+     * Layout: Date, Center Title, Area Name, Labour Name,
+     * Pipes Detail (63MM, 90MM, 110MM), Connections.
+     **************************************************************/
+    function buildExportDataObjectForMonthly() {
+      const monthVal = document.getElementById("filterMonthSelect").value;
+      const yearVal = document.getElementById("filterYearSelect").value;
+      const dateLabel = `${monthVal}-${yearVal}`;
 
-      let list = cachedReports.filter(r => {
-        if (!r.report_date) return false;
-        const [y, m] = r.report_date.split("-").map(Number);
-        return y === selectedYear && m === selectedMonth;
-      });
+      // Collect unique areas & labours or fallback to user defaults
+      const titles = [...new Set(currentFilteredReports.map(r => r.location_title).filter(Boolean))];
+      const areas = [...new Set(currentFilteredReports.map(r => r.area_name).filter(Boolean))];
+      const labours = [...new Set(currentFilteredReports.map(r => r.labour_name).filter(Boolean))];
 
-      if (selectedArea) list = list.filter(r => (r.area_name || "").trim() === selectedArea);
-      if (selectedLabour) list = list.filter(r => (r.labour_name || "").trim() === selectedLabour);
-
-      downloadReportData(list, format, periodLabel);
+      return {
+        dateText: dateLabel,
+        titleText: titles.join(", ") || currentUser.default_location || "Savarkundla",
+        areaText: areas.join(", ") || currentUser.default_area || "-",
+        labourText: labours.join(", ") || currentUser.default_labour || "-",
+        p63: document.getElementById("sumPipe63").textContent,
+        e63: document.getElementById("sumExtra63").textContent,
+        t63: document.getElementById("sumTotal63").textContent,
+        p90: document.getElementById("sumPipe90").textContent,
+        e90: document.getElementById("sumExtra90").textContent,
+        t90: document.getElementById("sumTotal90").textContent,
+        p110: document.getElementById("sumPipe110").textContent,
+        e110: document.getElementById("sumExtra110").textContent,
+        t110: document.getElementById("sumTotal110").textContent,
+        connections: document.getElementById("sumConnections").textContent,
+        filenameBase: `SiteProgress_${dateLabel}`
+      };
     }
 
-    function downloadReportData(reportsList, format, dateLabel) {
-      if (!reportsList || reportsList.length === 0) return;
+    function buildExportDataObjectForSingle(rep) {
+      const d = formatDisplayDate(rep.report_date);
+      return {
+        dateText: d,
+        titleText: rep.location_title || "Savarkundla",
+        areaText: rep.area_name || "-",
+        labourText: rep.labour_name || "-",
+        p63: String(rep.count_63 || 0),
+        e63: String(rep.extra_63 || 0),
+        t63: String(rep.total_63 || 0),
+        p90: String(rep.count_90 || 0),
+        e90: String(rep.extra_90 || 0),
+        t90: String(rep.total_90 || 0),
+        p110: String(rep.count_110 || 0),
+        e110: String(rep.extra_110 || 0),
+        t110: String(rep.total_110 || 0),
+        connections: String(rep.connections || 0),
+        filenameBase: `SiteProgress_${d}`
+      };
+    }
 
-      const sum = calculateCombinedTotals(reportsList);
-      const titles = [...new Set(reportsList.map(r => (r.site_title || "Savarkundla").trim()).filter(Boolean))].join(", ") || "Savarkundla";
-      const areas = [...new Set(reportsList.map(r => (r.area_name || "").trim()).filter(Boolean))].join(", ") || "-";
-      const labours = [...new Set(reportsList.map(r => (r.labour_name || "").trim()).filter(Boolean))].join(", ") || "-";
+    function downloadMonthlyReport(format) {
+      if (!currentFilteredReports.length) return;
+      const exp = buildExportDataObjectForMonthly();
+      triggerFileExport(exp, format);
+    }
 
-      const sheetRows = [
-        [`Date: ${dateLabel}`, "", `Title: ${titles}`, ""],
-        [`Area Name: ${areas}`, "", "", ""],
-        [`Labour Name: ${labours}`, "", "", ""],
-        [],
+    function downloadSingleReport(reportId, format) {
+      const rep = currentFilteredReports.find(r => String(r.id) === String(reportId));
+      if (!rep) return;
+      const exp = buildExportDataObjectForSingle(rep);
+      triggerFileExport(exp, format);
+    }
+
+    function triggerFileExport(exp, format) {
+      const rows = [
+        ["Date: " + exp.dateText, "Title: " + exp.titleText, "", ""],
+        ["Area Name:", exp.areaText, "", ""],
+        ["Labour Name:", exp.labourText, "", ""],
+        ["", "", "", ""],
         ["PVC", "PIPE", "EXTRA MTR", "TOTAL MTR"],
-        ["63MM", sum.c63, sum.e63, sum.t63],
-        ["90MM", sum.c90, sum.e90, sum.t90],
-        ["110MM", sum.c110, sum.e110, sum.t110],
-        [],
-        ["Total Connections", sum.conn, "", ""]
+        ["63MM", exp.p63, exp.e63, exp.t63],
+        ["90MM", exp.p90, exp.e90, exp.t90],
+        ["110MM", exp.p110, exp.e110, exp.t110],
+        ["", "", "", ""],
+        ["Total Connections", exp.connections, "", ""]
       ];
 
       if (format === "csv") {
-        const csvContent = sheetRows.map(r => r.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+        const csvContent = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
         const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = `Site_Progress_${dateLabel.replace(/\s+/g, "_")}.csv`;
+        link.download = `${exp.filenameBase}.csv`;
         link.click();
       } else if (format === "excel") {
-        const ws = XLSX.utils.aoa_to_sheet(sheetRows);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Report");
-        XLSX.writeFile(wb, `Site_Progress_${dateLabel.replace(/\s+/g, "_")}.xlsx`);
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        ws["!cols"] = [{ wch: 18 }, { wch: 18 }, { wch: 16 }, { wch: 16 }];
+        XLSX.utils.book_append_sheet(wb, ws, "Site Progress");
+        XLSX.writeFile(wb, `${exp.filenameBase}.xlsx`);
       } else if (format === "pdf") {
         const { jsPDF } = window.jspdf;
+        // A4 Portrait PDF
         const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
-        // Left: Date | Center: Title
+        // Top Left / Top Right Date & Top Center Title
+        doc.setFont("helvetica", "bold");
         doc.setFontSize(11);
-        doc.text(`Date: ${dateLabel}`, 14, 18);
-        doc.setFontSize(15);
-        doc.text(titles, 105, 18, { align: "center" });
+        doc.text(`Date: ${exp.dateText}`, 15, 18);
+        doc.text(`Date: ${exp.dateText}`, 195, 18, { align: "right" });
 
-        // Below: Area & Labour Name (supports multiple areas if a labour worked in >1 area)
-        doc.setFontSize(11);
-        doc.text(`Area Name: ${areas}`, 14, 28);
-        doc.text(`Labour Name: ${labours}`, 14, 35);
+        doc.setFontSize(18);
+        doc.text(String(exp.titleText), 105, 18, { align: "center" });
 
-        // Pipes Table
+        // Below Title: Area Name & Labour Name
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Area Name: ${exp.areaText}`, 105, 27, { align: "center" });
+        doc.text(`Labour Name: ${exp.labourText}`, 105, 34, { align: "center" });
+
+        // Pipes Detail Table
         doc.autoTable({
           startY: 42,
           head: [["PVC", "PIPE", "EXTRA MTR", "TOTAL MTR"]],
           body: [
-            ["63MM", sum.c63, sum.e63, sum.t63],
-            ["90MM", sum.c90, sum.e90, sum.t90],
-            ["110MM", sum.c110, sum.e110, sum.t110]
+            ["63MM", exp.p63, exp.e63, exp.t63],
+            ["90MM", exp.p90, exp.e90, exp.t90],
+            ["110MM", exp.p110, exp.e110, exp.t110]
           ],
-          theme: "grid"
+          theme: "grid",
+          headStyles: { fillColor: [30, 64, 175], textColor: 255, fontStyle: "bold", halign: "center" },
+          bodyStyles: { halign: "center", fontSize: 11 },
+          columnStyles: {
+            0: { fontStyle: "bold" },
+            3: { fontStyle: "bold" }
+          }
         });
 
         const finalY = doc.lastAutoTable.finalY + 10;
-        doc.setFontSize(12);
-        doc.text(`Total Connections: ${sum.conn}`, 14, finalY);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(13);
+        doc.text(`Total Connections: ${exp.connections}`, 15, finalY);
 
-        doc.save(`Site_Progress_${dateLabel.replace(/\s+/g, "_")}.pdf`);
+        doc.save(`${exp.filenameBase}.pdf`);
       }
     }
 
-    function formatDateDDMMYYYY(isoDate) {
-      if (!isoDate) return "";
-      const [y, m, d] = isoDate.split("-");
-      return `${d}-${m}-${y}`;
-    }
-
-    // =========================================================================
-    // 10. PROFILE LOGOUT & DELETE ACCOUNT
-    // =========================================================================
-    function handleLogout() {
-      const savedCreds = JSON.parse(localStorage.getItem("sp_last_login_creds") || "null");
-      if (savedCreds) {
-        document.getElementById("loginEmail").value = savedCreds.email || "";
-        document.getElementById("loginPassword").value = savedCreds.password || "";
-      }
-      currentUser = null;
-      showView("loginView");
+    /**************************************************************
+     * 10. PROFILE PAGE & ACCOUNT DELETION
+     **************************************************************/
+    function renderProfilePage() {
+      if (!currentUser) return;
+      document.getElementById("profileUsername").textContent = currentUser.username || "-";
+      document.getElementById("profileEmail").textContent = currentUser.email || "-";
+      document.getElementById("profileAvatarInitial").textContent = (currentUser.username || "U").charAt(0).toUpperCase();
     }
 
     function openDeleteAccountModal() {
@@ -1329,35 +1852,70 @@
 
     async function confirmDeleteAccount() {
       if (!currentUser) return;
-      if (useSupabase) {
-        await supabaseClient.from("site_reports").delete().eq("user_id", currentUser.id);
-        await supabaseClient.from("app_users").delete().eq("id", currentUser.id);
-      } else {
-        const users = JSON.parse(localStorage.getItem("sp_users") || "[]").filter(u => u.id !== currentUser.id);
-        const reports = JSON.parse(localStorage.getItem("sp_reports") || "[]").filter(r => r.user_id !== currentUser.id);
-        localStorage.setItem("sp_users", JSON.stringify(users));
-        localStorage.setItem("sp_reports", JSON.stringify(reports));
+      const emailToDelete = currentUser.email;
+
+      await dbDeleteUserAccountAndData(emailToDelete);
+
+      // Clear saved login credentials if they belonged to deleted user
+      if (localStorage.getItem("sp_autofill_email") === emailToDelete) {
+        localStorage.removeItem("sp_autofill_email");
+        localStorage.removeItem("sp_autofill_password");
       }
 
-      localStorage.removeItem("sp_last_login_creds");
-      document.getElementById("loginEmail").value = "";
-      document.getElementById("loginPassword").value = "";
       currentUser = null;
       closeDeleteAccountModal();
-      showView("loginView");
+      populateLoginAutofill();
+      showPage("page-login");
+      showToast("Account Permanently Deleted");
     }
 
-    // =========================================================================
-    // 11. MODAL HELPERS
-    // =========================================================================
-    function showInfoModal(msg) {
-      document.getElementById("infoModalText").textContent = msg;
-      document.getElementById("infoModal").classList.remove("hidden");
+    /**************************************************************
+     * 11. UTILITIES & INITIALIZATION ON PAGE LOAD
+     **************************************************************/
+    function toggleElement(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle("hidden");
     }
 
-    function closeInfoModal() {
-      document.getElementById("infoModal").classList.add("hidden");
+    function togglePasswordVisibility(inputId, btn) {
+      const input = document.getElementById(inputId);
+      const icon = btn.querySelector("i");
+      if (input.type === "password") {
+        input.type = "text";
+        icon.className = "fa-regular fa-eye-slash text-sm";
+      } else {
+        input.type = "password";
+        icon.className = "fa-regular fa-eye text-sm";
+      }
     }
+
+    let toastTimer = null;
+    function showToast(message, duration = 2000) {
+      const toast = document.getElementById("bottomToast");
+      document.getElementById("bottomToastText").textContent = message;
+      toast.classList.remove("hidden");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.add("hidden");
+      }, duration);
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    // On every refresh, open directly on Login Page with pre-filled Email & Password
+    window.addEventListener("DOMContentLoaded", () => {
+      initDatabase();
+      populateLoginAutofill();
+      setTodayOnHomeDate();
+      populateYearDropdown();
+      showPage("page-login");
+    });
   </script>
 </body>
 </html>
