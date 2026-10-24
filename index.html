@@ -785,7 +785,7 @@
       if (url && key && window.supabase) {
         try {
           supabaseClient = window.supabase.createClient(url, key);
-          badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Supabase Live`;
+          badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>`;
         } catch (err) {
           console.error("Supabase init error:", err);
           supabaseClient = null;
