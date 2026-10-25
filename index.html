@@ -136,38 +136,21 @@ function buildExportDataObjectForSingle(rep){const d=formatDisplayDate(rep.repor
 function downloadMonthlyReport(f){if(!currentFilteredReports.length) return;triggerFileExport(buildExportDataObjectForMonthly(),f);}
 function downloadSingleReport(rid,f){const rep=currentFilteredReports.find(r=>String(r.id)===String(rid));if(!rep) return;triggerFileExport(buildExportDataObjectForSingle(rep),f);}
 
-// --- NEW FULL DAY EXPORT ---
 function downloadFullDayReport(format){
   if(!currentFilteredReports.length) return;
   const sd=document.getElementById("filterDateInput").value;
   if(!sd) return;
   const dateStr=formatDisplayDate(sd);
   const downloadDate=formatDisplayDate(getTodayISO());
-  // Build per report objects
   const perReports=currentFilteredReports.map((rep,i)=>{
     const conns=allConnectionsCache.filter(c=>String(c.report_id)===String(rep.id));
-    return {
-      idx:i+1,
-      title:rep.location_title||"Savarkundla",
-      area:rep.area_name||"-",
-      labour:rep.labour_name||"-",
-      date:dateStr,
-      p63:rep.count_63||0, e63:rep.extra_63||0, t63:rep.total_63||0,
-      p90:rep.count_90||0, e90:rep.extra_90||0, t90:rep.total_90||0,
-      p110:rep.count_110||0, e110:rep.extra_110||0, t110:rep.total_110||0,
-      connections:conns.reduce((s,c)=>s+Number(c.conn_number||0),0),
-      connDetails:conns,
-      note:rep.note||""
-    };
+    return {idx:i+1,title:rep.location_title||"Savarkundla",area:rep.area_name||"-",labour:rep.labour_name||"-",date:dateStr,p63:rep.count_63||0, e63:rep.extra_63||0, t63:rep.total_63||0,p90:rep.count_90||0, e90:rep.extra_90||0, t90:rep.total_90||0,p110:rep.count_110||0, e110:rep.extra_110||0, t110:rep.total_110||0,connections:conns.reduce((s,c)=>s+Number(c.conn_number||0),0),connDetails:conns,note:rep.note||""};
   });
-  // Combined totals
   let cp63=0,ce63=0,ct63=0,cp90=0,ce90=0,ct90=0,cp110=0,ce110=0,ct110=0,connTotal=0;
   perReports.forEach(r=>{cp63+=Number(r.p63); ce63+=Number(r.e63); ct63+=Number(r.t63); cp90+=Number(r.p90); ce90+=Number(r.e90); ct90+=Number(r.t90); cp110+=Number(r.p110); ce110+=Number(r.e110); ct110+=Number(r.t110); connTotal+=Number(r.connections);});
   const allConnsCombined=allConnectionsCache.filter(c=>currentFilteredReports.some(r=>String(r.id)===String(c.report_id)));
   const combinedExp={leftDateText:dateStr,rightDateText:downloadDate,p63:cp63,e63:ce63,t63:ct63,p90:cp90,e90:ce90,t90:ct90,p110:cp110,e110:ce110,t110:ct110,connections:connTotal,connDetails:allConnsCombined,titleText:[...new Set(perReports.map(r=>r.title))].join(", "),areaText:[...new Set(perReports.map(r=>r.area))].join(", "),labourText:[...new Set(perReports.map(r=>r.labour))].join(", ")};
-
   const baseName=`SiteProgress_FullDay_${dateStr.replaceAll('-','_')}_${perReports.length}Reports`;
-
   if(format==="csv" || format==="excel"){
     let rows=[];
     perReports.forEach(rep=>{
@@ -176,62 +159,27 @@ function downloadFullDayReport(format){
       rows.push(["","Title: "+rep.title,"","",""]);
       rows.push(["Area Name:",rep.area,"","",""]);
       rows.push(["Labour Name:",rep.labour,"","",""]);
-      rows.push(["","","","",""]);
-      rows.push(["PVC Pipe Details","","","",""]);
-      rows.push(["","","","",""]);
-      rows.push(["PVC","PIPE","EXTRA MTR","TOTAL MTR",""]);
-      rows.push(["63MM",rep.p63,rep.e63,rep.t63,""]);
-      rows.push(["90MM",rep.p90,rep.e90,rep.t90,""]);
-      rows.push(["110MM",rep.p110,rep.e110,rep.t110,""]);
-      rows.push(["","","","",""]);
-      rows.push(["Total Pipes:",String(Number(rep.p63)+Number(rep.p90)+Number(rep.p110)),"","",""]);
-      rows.push(["Total Extra Mtrs:",String(Number(rep.e63)+Number(rep.e90)+Number(rep.e110)),"","",""]);
-      rows.push(["Total Mtrs:",String(Number(rep.t63)+Number(rep.t90)+Number(rep.t110)),"","",""]);
-      rows.push(["","","","",""]);
-      rows.push(["","","","",""]);
-      rows.push(["","","","",""]);
-      rows.push(["Connection details","","","",""]);
-      rows.push(["","","","",""]);
-      rows.push(["Sr No.","Connection","Name","Mobile Number",""]);
+      rows.push(["","","","",""]);rows.push(["PVC Pipe Details","","","",""]);rows.push(["","","","",""]);rows.push(["PVC","PIPE","EXTRA MTR","TOTAL MTR",""]);
+      rows.push(["63MM",rep.p63,rep.e63,rep.t63,""]);rows.push(["90MM",rep.p90,rep.e90,rep.t90,""]);rows.push(["110MM",rep.p110,rep.e110,rep.t110,""]);rows.push(["","","","",""]);
+      rows.push(["Total Pipes:",String(Number(rep.p63)+Number(rep.p90)+Number(rep.p110)),"","",""]);rows.push(["Total Extra Mtrs:",String(Number(rep.e63)+Number(rep.e90)+Number(rep.e110)),"","",""]);rows.push(["Total Mtrs:",String(Number(rep.t63)+Number(rep.t90)+Number(rep.t110)),"","",""]);rows.push(["","","","",""]);rows.push(["","","","",""]);rows.push(["","","","",""]);
+      rows.push(["Connection details","","","",""]);rows.push(["","","","",""]);rows.push(["Sr No.","Connection","Name","Mobile Number",""]);
       rep.connDetails.forEach((c,i)=>{rows.push([String(i+1),String(c.conn_number||0),c.conn_name||"-",c.mobile_number||"-",""]);});
-      rows.push(["","","","",""]);
-      rows.push(["Total Connections:",String(rep.connections),"","",""]);
-      rows.push(["","","","",""]);
-      rows.push(["","","","",""]);
-      rows.push(["","","","",""]);
+      rows.push(["","","","",""]);rows.push(["Total Connections:",String(rep.connections),"","",""]);rows.push(["","","","",""]);rows.push(["","","","",""]);rows.push(["","","","",""]);
       if(rep.note){rows.push(["Note:",rep.note,"","",""]); rows.push(["","","","",""]); rows.push(["","","","",""]); rows.push(["","","","",""]);}
-      rows.push(["","","","",""]); // gap between reports
+      rows.push(["","","","",""]);
     });
-    // Combined last
-    rows.push([`=== COMBINED FULL DAY - ${dateStr} ===`,"","","",""]);
+    rows.push([`=== Combine All Report Data - ${dateStr} ===`,"","","",""]);
     rows.push([`Report Date: ${dateStr}`,`Site Details`,"","","Download Date: "+downloadDate]);
-    rows.push(["","Title: "+combinedExp.titleText,"","",""]);
-    rows.push(["Area Name:",combinedExp.areaText,"","",""]);
-    rows.push(["Labour Name:",combinedExp.labourText,"","",""]);
-    rows.push(["","","","",""]);
-    rows.push(["PVC Pipe Details","","","",""]);
-    rows.push(["","","","",""]);
-    rows.push(["PVC","PIPE","EXTRA MTR","TOTAL MTR",""]);
-    rows.push(["63MM",combinedExp.p63,combinedExp.e63,combinedExp.t63,""]);
-    rows.push(["90MM",combinedExp.p90,combinedExp.e90,combinedExp.t90,""]);
-    rows.push(["110MM",combinedExp.p110,combinedExp.e110,combinedExp.t110,""]);
-    rows.push(["","","","",""]);
-    rows.push(["Total Pipes:",String(Number(combinedExp.p63)+Number(combinedExp.p90)+Number(combinedExp.p110)),"","",""]);
-    rows.push(["Total Extra Mtrs:",String(Number(combinedExp.e63)+Number(combinedExp.e90)+Number(combinedExp.e110)),"","",""]);
-    rows.push(["Total Mtrs:",String(Number(combinedExp.t63)+Number(combinedExp.t90)+Number(combinedExp.t110)),"","",""]);
-    rows.push(["","","","",""]);rows.push(["","","","",""]);rows.push(["","","","",""]);
-    rows.push(["Connection details","","","",""]);
-    rows.push(["","","","",""]);
-    rows.push(["Sr No.","Connection","Name","Mobile Number",""]);
+    rows.push(["","Title: "+combinedExp.titleText,"","",""]);rows.push(["Area Name:",combinedExp.areaText,"","",""]);rows.push(["Labour Name:",combinedExp.labourText,"","",""]);rows.push(["","","","",""]);rows.push(["PVC Pipe Details","","","",""]);rows.push(["","","","",""]);rows.push(["PVC","PIPE","EXTRA MTR","TOTAL MTR",""]);
+    rows.push(["63MM",combinedExp.p63,combinedExp.e63,combinedExp.t63,""]);rows.push(["90MM",combinedExp.p90,combinedExp.e90,combinedExp.t90,""]);rows.push(["110MM",combinedExp.p110,combinedExp.e110,combinedExp.t110,""]);rows.push(["","","","",""]);
+    rows.push(["Total Pipes:",String(Number(combinedExp.p63)+Number(combinedExp.p90)+Number(combinedExp.p110)),"","",""]);rows.push(["Total Extra Mtrs:",String(Number(combinedExp.e63)+Number(combinedExp.e90)+Number(combinedExp.e110)),"","",""]);rows.push(["Total Mtrs:",String(Number(combinedExp.t63)+Number(combinedExp.t90)+Number(combinedExp.t110)),"","",""]);rows.push(["","","","",""]);rows.push(["","","","",""]);rows.push(["","","","",""]);
+    rows.push(["Connection details","","","",""]);rows.push(["","","","",""]);rows.push(["Sr No.","Connection","Name","Mobile Number",""]);
     combinedExp.connDetails.forEach((c,i)=>{rows.push([String(i+1),String(c.conn_number||0),c.conn_name||"-",c.mobile_number||"-",""]);});
-    rows.push(["","","","",""]);
-    rows.push(["Total Connections:",String(combinedExp.connections),"","",""]);
-
+    rows.push(["","","","",""]);rows.push(["Total Connections:",String(combinedExp.connections),"","",""]);
     if(format==="csv"){const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");const blob=new Blob([csv],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`${baseName}.csv`;a.click();}
     else{const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet(rows);ws["!cols"]=[{wch:12},{wch:12},{wch:20},{wch:16},{wch:22}];XLSX.utils.book_append_sheet(wb,ws,"FullDay");XLSX.writeFile(wb,`${baseName}.xlsx`);}
     return;
   }
-
   if(format==="pdf"){
     const {jsPDF}=window.jspdf;
     const doc=new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
@@ -258,22 +206,28 @@ function downloadFullDayReport(format){
         fy=doc.lastAutoTable.finalY+6;
       } else {fy+=6;}
       doc.setFontSize(10);doc.setFont("helvetica","bold");doc.text(`Total Connections: ${rep.connections}`,15,fy);fy+=10;
-      if(rep.note){doc.setFont("helvetica","normal");doc.text(`Note: ${rep.note}`,15,fy,{maxWidth:180});}
+      if(rep.note){
+        doc.setFont("helvetica","bold");doc.setFontSize(11);doc.setTextColor(37,99,235);
+        doc.text("Note:",15,fy);fy+=6;
+        doc.setFont("helvetica","normal");doc.setTextColor(0,0,0);doc.setFontSize(11);
+        doc.text(`${rep.note}`,15,fy,{maxWidth:180});
+      }
     };
-    // each report on new page
-    perReports.forEach((rep,i)=>{
-      drawReportPage(rep, i===0, `Report ${rep.idx} / ${perReports.length}`);
-    });
-    // combined page
+    perReports.forEach((rep,i)=>{drawReportPage(rep, i===0, `Report ${rep.idx} / ${perReports.length}`);});
+    // Combined page - NEW LAYOUT AS PER USER REQUEST
     doc.addPage();
-    doc.setFont("helvetica","bold");doc.setFontSize(13);doc.setTextColor(220,20,60);doc.text(`COMBINED FULL DAY - ${dateStr}`,105,15,{align:"center"});
-    doc.setTextColor(0,0,0);doc.setFontSize(11);doc.setFont("helvetica","normal");
+    // Line 1: Report Date left, Download Date right, center empty
+    doc.setFont("helvetica","bold");doc.setFontSize(11);doc.setTextColor(0,0,0);
     doc.text(`Report Date: ${dateStr}`,15,15);
     doc.text(`Download Date: ${downloadDate}`,195,15,{align:"right"});
-    doc.setFontSize(16);doc.setFont("helvetica","bold");doc.text(combinedExp.titleText,105,24,{align:"center"});
-    doc.setFontSize(11);doc.setFont("helvetica","normal");doc.text(`Area: ${combinedExp.areaText}`,105,31,{align:"center"});doc.text(`Labour: ${combinedExp.labourText}`,105,37,{align:"center"});
-    doc.setFont("helvetica","bold");doc.setFontSize(12);doc.text("PVC Pipe Details (Combined)",15,46);
-    doc.autoTable({startY:49,head:[["PVC","PIPE","EXTRA MTR","TOTAL MTR"]],body:[["63MM",combinedExp.p63,combinedExp.e63,combinedExp.t63],["90MM",combinedExp.p90,combinedExp.e90,combinedExp.t90],["110MM",combinedExp.p110,combinedExp.e110,combinedExp.t110]],theme:"grid",headStyles:{fillColor:[30,64,175],textColor:255,halign:"center"},bodyStyles:{halign:"center",fontSize:10}});
+    // Line 2: Combine All Report Data center
+    doc.setFontSize(13);doc.setTextColor(220,20,60);
+    doc.text(`Combine All Report Data`,105,23,{align:"center"});
+    // Next content from lower line
+    doc.setTextColor(0,0,0);doc.setFontSize(16);doc.setFont("helvetica","bold");doc.text(combinedExp.titleText,105,32,{align:"center"});
+    doc.setFontSize(11);doc.setFont("helvetica","normal");doc.text(`Area: ${combinedExp.areaText}`,105,39,{align:"center"});doc.text(`Labour: ${combinedExp.labourText}`,105,45,{align:"center"});
+    doc.setFont("helvetica","bold");doc.setFontSize(12);doc.text("PVC Pipe Details (Combined)",15,54);
+    doc.autoTable({startY:57,head:[["PVC","PIPE","EXTRA MTR","TOTAL MTR"]],body:[["63MM",combinedExp.p63,combinedExp.e63,combinedExp.t63],["90MM",combinedExp.p90,combinedExp.e90,combinedExp.t90],["110MM",combinedExp.p110,combinedExp.e110,combinedExp.t110]],theme:"grid",headStyles:{fillColor:[30,64,175],textColor:255,halign:"center"},bodyStyles:{halign:"center",fontSize:10}});
     let fy=doc.lastAutoTable.finalY+8;
     doc.setFontSize(10);doc.setFont("helvetica","normal");
     doc.text(`Total Pipes: ${Number(combinedExp.p63)+Number(combinedExp.p90)+Number(combinedExp.p110)}`,15,fy);fy+=6;
@@ -350,8 +304,10 @@ function triggerFileExport(exp,format){
     doc.setFont("helvetica","bold");doc.setFontSize(11);doc.setTextColor(0,0,0);
     doc.text(`Total Connections: ${exp.connections}`,15,fy);fy+=12;
     if(exp.note){
-      doc.setFont("helvetica","normal");doc.setFontSize(11);
-      doc.text(`Note: ${exp.note}`,15,fy,{maxWidth:180});
+      doc.setFont("helvetica","bold");doc.setFontSize(11);doc.setTextColor(37,99,235);
+      doc.text("Note:",15,fy);fy+=6;
+      doc.setFont("helvetica","normal");doc.setTextColor(0,0,0);
+      doc.text(`${exp.note}`,15,fy,{maxWidth:180});
     }
     doc.save(`${exp.filenameBase}.pdf`);
   }
