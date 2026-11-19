@@ -255,7 +255,10 @@ async function confirmBulkDeleteCustom(){
 
 const ALL_PAGES=["page-login","page-register","page-forgot","page-reset","page-home","page-new-report","page-filter","page-profile"];
 function showPage(pid){ALL_PAGES.forEach(id=>document.getElementById(id).classList.add("hidden"));document.getElementById(pid).classList.remove("hidden");["loginErrorBox","registerErrorBox","forgotErrorBox","resetMsgBox"].forEach(b=>{const el=document.getElementById(b);if(el) el.classList.add("hidden");});const auth=["page-login","page-register","page-forgot","page-reset"];document.getElementById("bottomNav").classList.toggle("hidden",auth.includes(pid));}
-function populateLoginAutofill(){document.getElementById("loginEmail").value=localStorage.getItem("sp_autofill_email")||"";document.getElementById("loginPassword").value=localStorage.getItem("sp_autofill_password")||"";}
+function populateLoginAutofill(){
+  document.getElementById("loginEmail").value = localStorage.getItem("sp_autofill_email") || "";
+  document.getElementById("loginPassword").value = localStorage.getItem("sp_autofill_password") || "";
+}
 function switchMainTab(t){["home","filter","profile"].forEach(x=>{const b=document.getElementById("navBtn-"+x);b.className=x===t?"flex flex-col items-center gap-1 py-1 px-4 rounded-xl text-blue-400 font-bold transition":"flex flex-col items-center gap-1 py-1 px-4 rounded-xl text-slate-400 hover:text-slate-200 font-medium transition";});if(t==="home")showPage("page-home");else if(t==="filter"){showPage("page-filter");initFilterDefaultsAndLoad();}else if(t==="profile"){showPage("page-profile");renderProfilePage();}}
 async function handleRegister(){
   const un=document.getElementById("regUsername").value.trim();
@@ -291,7 +294,7 @@ async function handleLogin(){
     if(!u){ u = await dbCreateUser({username: em.split("@")[0], email: em, password: "[ENCRYPTED]"}); }
     currentUser = u;    
     localStorage.setItem("sp_autofill_email", em);
-    localStorage.removeItem("sp_autofill_password");
+    localStorage.removeItem("sp_autofill_password",pw);
     document.getElementById("loginPassword").value = "";
     setTodayOnHomeDate();
     await loadCustomLists();
@@ -305,12 +308,70 @@ async function handleLogin(){
     eb.classList.remove("hidden");
   }
 }
-async function handleVerifyEmail(){const em=document.getElementById("forgotEmailInput").value.trim().toLowerCase();const eb=document.getElementById("forgotErrorBox");if(!em){eb.textContent="Please enter your Mail ID";eb.classList.remove("hidden");return;}try{const u=await dbFindUserByEmail(em);if(!u){eb.textContent="Email id is not registered";eb.classList.remove("hidden");return;}resetTargetEmail=u.email;document.getElementById("resetDisplayUsername").textContent=u.username;document.getElementById("resetDisplayEmail").textContent=u.email;showPage("page-reset");}catch{eb.textContent="Verification failed.";eb.classList.remove("hidden");}}
-async function handleResetPassword(){const np=document.getElementById("resetNewPassword").value;const rp=document.getElementById("resetRetypePassword").value;const mb=document.getElementById("resetMsgBox");if(!np||!rp){mb.className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs font-semibold text-center";mb.textContent="Please enter and retype your new password.";mb.classList.remove("hidden");return;}if(np!==rp){mb.className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs font-semibold text-center";mb.textContent="Passwords do not match!";mb.classList.remove("hidden");return;}try{await dbUpdateUserPassword(resetTargetEmail,np);if(localStorage.getItem("sp_autofill_email")===resetTargetEmail){localStorage.setItem("sp_autofill_password",np);populateLoginAutofill();}mb.className="p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold text-center";mb.textContent="Password update successful";mb.classList.remove("hidden");}catch{mb.className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs font-semibold text-center";mb.textContent="Failed to update password.";mb.classList.remove("hidden");}}
+async function handleVerifyEmail(){
+  const em = document.getElementById("forgotEmailInput").value.trim().toLowerCase();
+  const eb = document.getElementById("forgotErrorBox");
+  if(!em){ eb.textContent="Please enter your Mail ID"; eb.classList.remove("hidden"); return; }
+  try{
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(em, {
+      redirectTo: window.location.origin + window.location.pathname
+    });
+    if(error) throw error;
+    eb.className = "p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold text-center";
+    eb.textContent = "Password reset link tamara Email par mokli che! Email kholi ne link par click karo.";
+    eb.classList.remove("hidden");
+  }catch(err){
+    eb.className = "p-3 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs font-semibold text-center";
+    eb.textContent = "Error: " + (err.message || "Failed to send reset link.");
+    eb.classList.remove("hidden");
+  }
+}
+async function handleResetPassword(){
+  const np = document.getElementById("resetNewPassword").value;
+  const rp = document.getElementById("resetRetypePassword").value;
+  const mb = document.getElementById("resetMsgBox");
+  if(!np || !rp){
+    mb.className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs font-semibold text-center";
+    mb.textContent="Please enter and retype your new password.";
+    mb.classList.remove("hidden");
+    return;
+  }
+  if(np.length < 6){
+    mb.className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs font-semibold text-center";
+    mb.textContent="Password must be at least 6 characters.";
+    mb.classList.remove("hidden");
+    return;
+  }
+  if(np !== rp){
+    mb.className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs font-semibold text-center";
+    mb.textContent="Passwords do not match!";
+    mb.classList.remove("hidden");
+    return;
+  }
+  try{
+    const { data, error } = await supabaseClient.auth.updateUser({ password: np });
+    if(error) throw error;
+    if(data?.user?.email){
+      localStorage.setItem("sp_autofill_email", data.user.email);
+      localStorage.setItem("sp_autofill_password", np);
+      populateLoginAutofill();
+    }
+    mb.className="p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold text-center";
+    mb.textContent="Password update successful! Have nava password thi login karo.";
+    mb.classList.remove("hidden");
+    document.getElementById("resetNewPassword").value = "";
+    document.getElementById("resetRetypePassword").value = "";
+  }catch(err){
+    mb.className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs font-semibold text-center";
+    mb.textContent="Error: " + (err.message || "Failed to update password.");
+    mb.classList.remove("hidden");
+  }
+}
 function goBackToLoginFromHome(){currentUser=null;populateLoginAutofill();showPage("page-login");}
 async function handleLogout(){
   if(supabaseClient) await supabaseClient.auth.signOut();
   currentUser=null;
+  populateLoginAutofill();
   showPage("page-login");
 }
 function getTodayISO(){const n=new Date();return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,"0")}-${String(n.getDate()).padStart(2,"0")}`;}function formatDisplayDate(iso){if(!iso) return "";const p=iso.split("-");if(p.length!==3) return iso;return `${p[2]}-${p[1]}-${p[0]}`;}
@@ -524,7 +585,17 @@ function toggleElement(id){const el=document.getElementById(id);if(el) el.classL
 function togglePasswordVisibility(id,btn){const inp=document.getElementById(id);const ic=btn.querySelector("i");if(inp.type==="password"){inp.type="text";ic.className="fa-regular fa-eye-slash text-sm";}else{inp.type="password";ic.className="fa-regular fa-eye text-sm";}}
 let toastTimer=null;function showToast(msg,d=2000){const t=document.getElementById("bottomToast");document.getElementById("bottomToastText").textContent=msg;t.classList.remove("hidden");clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.add("hidden"),d);}
 function escapeHtml(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
-window.addEventListener("DOMContentLoaded",()=>{initDatabase();populateLoginAutofill();setTodayOnHomeDate();populateYearDropdown();showPage("page-login");
+window.addEventListener("DOMContentLoaded",()=>{initDatabase();
+    if (supabaseClient) {
+  supabaseClient.auth.onAuthStateChange((event, session) => {
+    if (event === "PASSWORD_RECOVERY") {
+      document.getElementById("resetDisplayEmail").textContent = session?.user?.email || "";
+      document.getElementById("resetDisplayUsername").textContent = session?.user?.email?.split("@")[0] || "User";
+      showPage("page-reset");
+    }
+  });
+}
+populateLoginAutofill();setTodayOnHomeDate();populateYearDropdown();showPage("page-login");
     document.querySelectorAll("input, textarea").forEach(el => {
     el.setAttribute("autocomplete", el.type === "password" ? "new-password" : "off");});
 });
