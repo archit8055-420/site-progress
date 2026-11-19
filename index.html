@@ -313,19 +313,26 @@ async function handleVerifyEmail(){
   const eb = document.getElementById("forgotErrorBox");
   if(!em){ eb.textContent="Please enter your Mail ID"; eb.classList.remove("hidden"); return; }
   try{
-    const { error } = await supabaseClient.auth.resetPasswordForEmail(em, {
-      redirectTo: window.location.origin + window.location.pathname
-    });
+    const { data, error } = await supabaseClient.rpc("verify_user_email", { p_email: em });
     if(error) throw error;
-    eb.className = "p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold text-center";
-    eb.textContent = "Password reset link tamara Email par mokli che! Email kholi ne link par click karo.";
-    eb.classList.remove("hidden");
+    if(!data || data.length === 0){
+      eb.className = "p-3 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs font-semibold text-center";
+      eb.textContent = "Email id is not registered";
+      eb.classList.remove("hidden");
+      return;
+    }
+    resetTargetEmail = data[0].email;
+    document.getElementById("resetDisplayUsername").textContent = data[0].username;
+    document.getElementById("resetDisplayEmail").textContent = data[0].email;
+    document.getElementById("resetNewPassword").value = "";
+    document.getElementById("resetRetypePassword").value = "";
+    showPage("page-reset");
   }catch(err){
-    eb.className = "p-3 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs font-semibold text-center";
-    eb.textContent = "Error: " + (err.message || "Failed to send reset link.");
+    eb.textContent = "Verification failed.";
     eb.classList.remove("hidden");
   }
 }
+
 async function handleResetPassword(){
   const np = document.getElementById("resetNewPassword").value;
   const rp = document.getElementById("resetRetypePassword").value;
@@ -349,21 +356,21 @@ async function handleResetPassword(){
     return;
   }
   try{
-    const { data, error } = await supabaseClient.auth.updateUser({ password: np });
-    if(error) throw error;
-    if(data?.user?.email){
-      localStorage.setItem("sp_autofill_email", data.user.email);
+    const { data, error } = await supabaseClient.rpc("reset_user_password_direct", {
+      p_email: resetTargetEmail,
+      p_new_password: np
+    });
+    if(error || !data) throw error || new Error("Update failed");
+    if(localStorage.getItem("sp_autofill_email") === resetTargetEmail){
       localStorage.setItem("sp_autofill_password", np);
       populateLoginAutofill();
     }
     mb.className="p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold text-center";
-    mb.textContent="Password update successful! Have nava password thi login karo.";
+    mb.textContent="Password update successful";
     mb.classList.remove("hidden");
-    document.getElementById("resetNewPassword").value = "";
-    document.getElementById("resetRetypePassword").value = "";
   }catch(err){
     mb.className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs font-semibold text-center";
-    mb.textContent="Error: " + (err.message || "Failed to update password.");
+    mb.textContent="Failed to update password.";
     mb.classList.remove("hidden");
   }
 }
