@@ -256,8 +256,14 @@ async function confirmBulkDeleteCustom(){
 const ALL_PAGES=["page-login","page-register","page-forgot","page-reset","page-home","page-new-report","page-filter","page-profile"];
 function showPage(pid){ALL_PAGES.forEach(id=>document.getElementById(id).classList.add("hidden"));document.getElementById(pid).classList.remove("hidden");["loginErrorBox","registerErrorBox","forgotErrorBox","resetMsgBox"].forEach(b=>{const el=document.getElementById(b);if(el) el.classList.add("hidden");});const auth=["page-login","page-register","page-forgot","page-reset"];document.getElementById("bottomNav").classList.toggle("hidden",auth.includes(pid));}
 function populateLoginAutofill(){
-  document.getElementById("loginEmail").value = localStorage.getItem("sp_autofill_email") || "";
-  document.getElementById("loginPassword").value = localStorage.getItem("sp_autofill_password") || "";
+  const em = localStorage.getItem("sp_autofill_email") || "";
+  const pw = localStorage.getItem("sp_autofill_password") || "";
+  document.getElementById("loginEmail").value = em;
+  document.getElementById("loginPassword").value = pw;
+  setTimeout(() => {
+    document.getElementById("loginEmail").value = em;
+    document.getElementById("loginPassword").value = pw;
+  }, 150);
 }
 function switchMainTab(t){["home","filter","profile"].forEach(x=>{const b=document.getElementById("navBtn-"+x);b.className=x===t?"flex flex-col items-center gap-1 py-1 px-4 rounded-xl text-blue-400 font-bold transition":"flex flex-col items-center gap-1 py-1 px-4 rounded-xl text-slate-400 hover:text-slate-200 font-medium transition";});if(t==="home")showPage("page-home");else if(t==="filter"){showPage("page-filter");initFilterDefaultsAndLoad();}else if(t==="profile"){showPage("page-profile");renderProfilePage();}}
 async function handleRegister(){
@@ -294,7 +300,7 @@ async function handleLogin(){
     if(!u){ u = await dbCreateUser({username: em.split("@")[0], email: em, password: "[ENCRYPTED]"}); }
     currentUser = u;    
     localStorage.setItem("sp_autofill_email", em);
-    localStorage.removeItem("sp_autofill_password",pw);
+    localStorage.setItem("sp_autofill_password", pw);
     document.getElementById("loginPassword").value = "";
     setTodayOnHomeDate();
     await loadCustomLists();
