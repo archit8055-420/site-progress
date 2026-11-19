@@ -257,11 +257,60 @@ const ALL_PAGES=["page-login","page-register","page-forgot","page-reset","page-h
 function showPage(pid){ALL_PAGES.forEach(id=>document.getElementById(id).classList.add("hidden"));document.getElementById(pid).classList.remove("hidden");["loginErrorBox","registerErrorBox","forgotErrorBox","resetMsgBox"].forEach(b=>{const el=document.getElementById(b);if(el) el.classList.add("hidden");});const auth=["page-login","page-register","page-forgot","page-reset"];document.getElementById("bottomNav").classList.toggle("hidden",auth.includes(pid));}
 function populateLoginAutofill(){document.getElementById("loginEmail").value=localStorage.getItem("sp_autofill_email")||"";document.getElementById("loginPassword").value=localStorage.getItem("sp_autofill_password")||"";}
 function switchMainTab(t){["home","filter","profile"].forEach(x=>{const b=document.getElementById("navBtn-"+x);b.className=x===t?"flex flex-col items-center gap-1 py-1 px-4 rounded-xl text-blue-400 font-bold transition":"flex flex-col items-center gap-1 py-1 px-4 rounded-xl text-slate-400 hover:text-slate-200 font-medium transition";});if(t==="home")showPage("page-home");else if(t==="filter"){showPage("page-filter");initFilterDefaultsAndLoad();}else if(t==="profile"){showPage("page-profile");renderProfilePage();}}
-async function handleRegister(){const un=document.getElementById("regUsername").value.trim();const em=document.getElementById("regEmail").value.trim().toLowerCase();const pw=document.getElementById("regPassword").value;const rpw=document.getElementById("regRePassword").value;const eb=document.getElementById("registerErrorBox");if(!un||!em||!pw||!rpw){eb.textContent="Please fill in all fields.";eb.classList.remove("hidden");return;}if(pw!==rpw){eb.textContent="Passwords do not match!";eb.classList.remove("hidden");return;}try{const ex=await dbFindUserByEmail(em);if(ex){eb.textContent="Email ID is already registered!";eb.classList.remove("hidden");return;}await dbCreateUser({username:un,email:em,password:pw});localStorage.removeItem("sp_autofill_email");localStorage.removeItem("sp_autofill_password");document.getElementById("loginEmail").value="";document.getElementById("loginPassword").value="";["regUsername","regEmail","regPassword","regRePassword"].forEach(id=>document.getElementById(id).value="");showToast("Registration Successful! Please Log In.");showPage("page-login");}catch(err){eb.textContent="Error: "+(err.message||"Could not register");eb.classList.remove("hidden");}}
-async function handleLogin(){const em=document.getElementById("loginEmail").value.trim().toLowerCase();const pw=document.getElementById("loginPassword").value;const eb=document.getElementById("loginErrorBox");if(!em||!pw){eb.textContent="Please enter both Email ID and Password.";eb.classList.remove("hidden");return;}try{const u=await dbFindUserByEmail(em);if(!u||u.password!==pw){eb.textContent="Invalid Email ID or Password!";eb.classList.remove("hidden");return;}currentUser=u;localStorage.setItem("sp_autofill_email",em);localStorage.setItem("sp_autofill_password",pw);setTodayOnHomeDate();await loadCustomLists();document.getElementById("homeSiteTitle").value=u.default_location||customLists.title[0]||"Savarkundla";document.getElementById("homeAreaInput").value=u.default_area||customLists.area[0]||"";document.getElementById("homeLabourInput").value=u.default_labour||customLists.labour[0]||"";renderCustomDropdowns();document.getElementById("loginPassword").value = "";switchMainTab("home");}catch(err){eb.textContent="Login Error: "+(err.message||"Failed");eb.classList.remove("hidden");}}
+async function handleRegister(){
+  const un=document.getElementById("regUsername").value.trim();
+  const em=document.getElementById("regEmail").value.trim().toLowerCase();
+  const pw=document.getElementById("regPassword").value;
+  const rpw=document.getElementById("regRePassword").value;
+  const eb=document.getElementById("registerErrorBox");
+  if(!un||!em||!pw||!rpw){eb.textContent="Please fill in all fields.";eb.classList.remove("hidden");return;}
+  if(pw.length<6){eb.textContent="Password must be at least 6 characters.";eb.classList.remove("hidden");return;}
+  if(pw!==rpw){eb.textContent="Passwords do not match!";eb.classList.remove("hidden");return;}
+  try{
+    const {data, error} = await supabaseClient.auth.signUp({ email: em, password: pw });
+    if(error) throw error;
+    await dbCreateUser({username:un, email:em, password:"[ENCRYPTED]"});
+    ["regUsername","regEmail","regPassword","regRePassword"].forEach(id=>document.getElementById(id).value="");
+    showToast("Registration Successful! Please Log In.");
+    showPage("page-login");
+  }catch(err){
+    eb.textContent="Error: "+(err.message||"Could not register");
+    eb.classList.remove("hidden");
+  }
+}
+
+async function handleLogin(){
+  const em=document.getElementById("loginEmail").value.trim().toLowerCase();
+  const pw=document.getElementById("loginPassword").value;
+  const eb=document.getElementById("loginErrorBox");
+  if(!em||!pw){eb.textContent="Please enter both Email ID and Password.";eb.classList.remove("hidden");return;}
+  try{
+    const {data, error} = await supabaseClient.auth.signInWithPassword({ email: em, password: pw });
+    if(error) throw error;
+    let u = await dbFindUserByEmail(em);
+    if(!u){ u = await dbCreateUser({username: em.split("@")[0], email: em, password: "[ENCRYPTED]"}); }
+    currentUser = u;
+    document.getElementById("loginPassword").value = "";
+    setTodayOnHomeDate();
+    await loadCustomLists();
+    document.getElementById("homeSiteTitle").value=u.default_location||customLists.title[0]||"Savarkundla";
+    document.getElementById("homeAreaInput").value=u.default_area||customLists.area[0]||"";
+    document.getElementById("homeLabourInput").value=u.default_labour||customLists.labour[0]||"";
+    renderCustomDropdowns();
+    switchMainTab("home");
+  }catch(err){
+    eb.textContent="Invalid Email ID or Password!";
+    eb.classList.remove("hidden");
+  }
+}
 async function handleVerifyEmail(){const em=document.getElementById("forgotEmailInput").value.trim().toLowerCase();const eb=document.getElementById("forgotErrorBox");if(!em){eb.textContent="Please enter your Mail ID";eb.classList.remove("hidden");return;}try{const u=await dbFindUserByEmail(em);if(!u){eb.textContent="Email id is not registered";eb.classList.remove("hidden");return;}resetTargetEmail=u.email;document.getElementById("resetDisplayUsername").textContent=u.username;document.getElementById("resetDisplayEmail").textContent=u.email;showPage("page-reset");}catch{eb.textContent="Verification failed.";eb.classList.remove("hidden");}}
 async function handleResetPassword(){const np=document.getElementById("resetNewPassword").value;const rp=document.getElementById("resetRetypePassword").value;const mb=document.getElementById("resetMsgBox");if(!np||!rp){mb.className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs font-semibold text-center";mb.textContent="Please enter and retype your new password.";mb.classList.remove("hidden");return;}if(np!==rp){mb.className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs font-semibold text-center";mb.textContent="Passwords do not match!";mb.classList.remove("hidden");return;}try{await dbUpdateUserPassword(resetTargetEmail,np);if(localStorage.getItem("sp_autofill_email")===resetTargetEmail){localStorage.setItem("sp_autofill_password",np);populateLoginAutofill();}mb.className="p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold text-center";mb.textContent="Password update successful";mb.classList.remove("hidden");}catch{mb.className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs font-semibold text-center";mb.textContent="Failed to update password.";mb.classList.remove("hidden");}}
-function goBackToLoginFromHome(){currentUser=null;populateLoginAutofill();showPage("page-login");}function handleLogout(){currentUser=null;populateLoginAutofill();showPage("page-login");}
+function goBackToLoginFromHome(){currentUser=null;populateLoginAutofill();showPage("page-login");}
+async function handleLogout(){
+  if(supabaseClient) await supabaseClient.auth.signOut();
+  currentUser=null;
+  showPage("page-login");
+}
 function getTodayISO(){const n=new Date();return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,"0")}-${String(n.getDate()).padStart(2,"0")}`;}function formatDisplayDate(iso){if(!iso) return "";const p=iso.split("-");if(p.length!==3) return iso;return `${p[2]}-${p[1]}-${p[0]}`;}
 function formatMonthYear(mv,yv){const names=["January","February","March","April","May","June","July","August","September","October","November","December"];const m = mv==="ALL" ? "Overall" : (names[parseInt(mv,10)-1]||mv);const y = yv==="ALL" ? "Overall" : yv;if(mv==="ALL" && yv==="ALL") return "Overall All Data";if(mv==="ALL") return `${y} - Overall Months`;if(yv==="ALL") return `${m} - Overall Years`;return `${m} ${yv}`;}
 function setTodayOnHomeDate(){document.getElementById("homeDateInput").value=getTodayISO();}
