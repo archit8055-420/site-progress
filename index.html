@@ -289,7 +289,9 @@ async function handleLogin(){
     if(error) throw error;
     let u = await dbFindUserByEmail(em);
     if(!u){ u = await dbCreateUser({username: em.split("@")[0], email: em, password: "[ENCRYPTED]"}); }
-    currentUser = u;
+    currentUser = u;    
+    localStorage.setItem("sp_autofill_email", em);
+    localStorage.removeItem("sp_autofill_password");
     document.getElementById("loginPassword").value = "";
     setTodayOnHomeDate();
     await loadCustomLists();
